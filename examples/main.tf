@@ -19,3 +19,7 @@ data "pinto_dns_zone" "zone1" {
 }
 
 data "pinto_dns_zones" "zones" {}
+
+data "pinto_dns_records" "records_env0" {
+  zone = "env0.co."
+}

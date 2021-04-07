@@ -23,4 +23,4 @@ data "pinto_dns_zone" "my_zone" {
 
 ## Attributes Reference
 
-- `zone_id` - The ID of the zone
+- `id` - (String) The ID of the zone
