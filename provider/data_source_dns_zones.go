@@ -8,23 +8,35 @@ import (
 	"log"
 )
 
-func dataSourceDnsZone() *schema.Resource {
+func dataSourceDnsZones() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceDnsZoneRead,
+		ReadContext: dataSourceDnsZonesRead,
 		Schema: map[string]*schema.Schema{
-			"zone_id": {
+			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"zones": {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Computed: true,
 						},
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+						"name": {
+							Type:     schema.TypeString,
+							Computed: true,
 						},
+					},
+				},
+			},
 		},
 	}
 }
 
-func dataSourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pinto := m.(*PintoProvider)
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
@@ -34,14 +46,26 @@ func dataSourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
 
-	zone := d.Get("name").(string)
-	log.Printf("[DEBUG] Pinto: Read Zone %s at %s for %s \n", zone, pinto.provider, pinto.environment)
+	log.Printf("[DEBUG] Pinto: Read zones at %s for %s \n", pinto.provider, pinto.environment)
 
-	z, _, err := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(pinto.provider).Environment(pinto.environment).Execute()
+	rz, _, err := pinto.client.ZonesApi.ApiDnsZonesGet(pctx).Provider(pinto.provider).Environment(pinto.environment).Execute()
 	if err.Error() != "" {
 		return diag.Errorf(err.Error())
 	}
-	d.SetId(z.Name)
+
+	zones :=  make([]interface{}, len(rz), len(rz))
+	for i,z := range rz {
+		zone := make(map[string]interface{})
+		zone["id"] = z.Name
+		zone["name"] = z.Name
+		zones[i] = zone
+	}
+
+	d.SetId(pinto.environment + "." +  pinto.provider + ".")
+	e := d.Set("zones", zones)
+	if e != nil {
+		return diag.FromErr(err)
+	}
 
 	return diags
 }

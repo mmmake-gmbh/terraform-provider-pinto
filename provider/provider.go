@@ -94,6 +94,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{},
 		DataSourcesMap: map[string]*schema.Resource{
 			"pinto_dns_zone": dataSourceDnsZone(),
+			"pinto_dns_zones": dataSourceDnsZones(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}

@@ -12,14 +12,14 @@ func dataSourceDnsZone() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDnsZoneRead,
 		Schema: map[string]*schema.Schema{
-			"zone_id": {
+			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
-						},
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-						},
+			},
 		},
 	}
 }
