@@ -64,4 +64,4 @@ site/
 # releases
 *.zip
 
-provider/
+vendor/
