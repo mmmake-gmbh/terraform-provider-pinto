@@ -17,3 +17,5 @@ provider "pinto" {
 data "pinto_dns_zone" "zone1" {
   name = "env0.co."
 }
+
+data "pinto_dns_zones" "zones" {}
