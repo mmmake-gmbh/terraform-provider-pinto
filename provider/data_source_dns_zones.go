@@ -46,17 +46,18 @@ func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m inter
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
 
-	log.Printf("[DEBUG] Pinto: Read zones at %s for %s \n", pinto.provider, pinto.environment)
+	log.Printf("[INFO] Pinto: Read zones at %s for %s \n", pinto.provider, pinto.environment)
 
-	rz, _, err := pinto.client.ZonesApi.ApiDnsZonesGet(pctx).Provider(pinto.provider).Environment(pinto.environment).Execute()
+	rz, resp, err := pinto.client.ZonesApi.ApiDnsZonesGet(pctx).Provider(pinto.provider).Environment(pinto.environment).Execute()
 	if err.Error() != "" {
+		handleClientError("[DS] ZONES READ", err.Error(), resp)
 		return diag.Errorf(err.Error())
 	}
 
 	zones :=  make([]interface{}, len(rz), len(rz))
 	for i,z := range rz {
 		zone := make(map[string]interface{})
-		zone["id"] = z.Name
+		zone["id"] = computeZoneId(z.Name,pinto.environment,pinto.provider)
 		zone["name"] = z.Name
 		zones[i] = zone
 	}

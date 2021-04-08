@@ -72,7 +72,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	zone := d.Get("zone").(string)
-	log.Printf("[DEBUG] Pinto: Read records from zone %s at %s for %s \n", zone, pinto.provider, pinto.environment)
+	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, pinto.provider, pinto.environment)
 
 	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Environment(pinto.environment).Provider(pinto.provider).Zone(zone)
 	val, ok := d.GetOk("record_type")
@@ -84,8 +84,9 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 		request.Name(val.(string))
 	}
 
-	rrecords, _, err := request.Execute()
+	rrecords, resp, err := request.Execute()
 	if err.Error() != "" {
+		handleClientError("[DS] RECORD READ", err.Error(), resp)
 		return diag.Errorf(err.Error())
 	}
 

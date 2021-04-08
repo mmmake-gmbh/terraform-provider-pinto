@@ -91,7 +91,10 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc(envKeyApiKey, nil),
 			},
 		},
-		ResourcesMap: map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"pinto_dns_zone": resourceDnsZone(),
+			"pinto_dns_record": resourceDnsRecord(),
+		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"pinto_dns_zone": dataSourceDnsZone(),
 			"pinto_dns_zones": dataSourceDnsZones(),
