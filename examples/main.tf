@@ -24,6 +24,12 @@ data "pinto_dns_records" "records_env0" {
   zone = "env0.co."
 }
 
+data "pinto_dns_record" "record" {
+  zone = "env0.co."
+  name = "pinto"
+  type = "A"
+}
+
 //resource "pinto_dns_record" "test_record1" {
 //  zone = "env0.co."
 //  name = "testrecord"
@@ -37,5 +43,4 @@ data "pinto_dns_records" "records_env0" {
 //  name = "test.purrfect."
 //}
 
-resource "pinto_dns_record" "testi" {
-}
+//resource "pinto_dns_record" "testi" {}

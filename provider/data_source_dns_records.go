@@ -34,6 +34,10 @@ func dataSourceDnsRecords() *schema.Resource {
 				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"id": {
+							Type: schema.TypeString,
+							Computed: true,
+						},
 						"name": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -92,12 +96,15 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	records :=  make([]interface{}, len(rrecords), len(rrecords))
 	for i,r := range rrecords {
+		idRecord := recordToRecord(r, zone)
+		idRecord.id = computeRecordId(pinto.provider, pinto.environment, idRecord)
 		record := make(map[string]interface{})
 		record["name"] = r.Name
 		record["type"] = r.Type
 		record["class"] = r.Class
 		record["ttl"] = r.Ttl
 		record["data"] = r.Data
+		record["id"] = idRecord.id
 		records[i] = record
 	}
 

@@ -1,13 +1,13 @@
 ---
-page_title: "Data Source dns_zones"
+page_title: "Data Source pinto_dns_zones"
 subcategory: "dns"
 description: |-
-  The zones data source allows for retrieval of existing zones.
+  The pinto_dns_zones data source allows for the retrieval of existing zones.
 ---
 
-# Data Source `dns_zones`
+# Data Source `pinto_dns_zones`
 
-The zones data source allows for retrieval of existing zones.
+The pinto_dns_zones data source allows for the retrieval of existing zones.
 
 ## Example Usage
 
@@ -18,6 +18,8 @@ data "pinto_dns_zone" "my_zones" {}
 ## Argument Reference
 
 ## Attributes Reference
+
+In addition to all the arguments above, the following attributes are exported.
 
 - `id` - (String) The ID of the retrieved zones list
 - `zones` - (Zones) A list of zones available at this provider, environment combination. See [Zones](#zones) for details.

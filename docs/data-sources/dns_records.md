@@ -1,13 +1,13 @@
 ---
-page_title: "Data Source dns_records"
+page_title: "Data Source pinto_dns_records"
 subcategory: "dns"
 description: |-
-  The records data source allows for retrieval of existing records of a zone.
+  The records data source allows for the retrieval of existing records of a zone.
 ---
 
-# Data Source `dns_records`
+# Data Source `pinto_dns_records`
 
-The records data source allows for retrieval of existing records of a zone.
+The records data source allows for the retrieval of existing records of a zone.
 
 ## Example Usage
 
@@ -25,13 +25,16 @@ data "pinto_dns_records" "my_records" {
 
 ## Attributes Reference
 
+In addition to all the arguments above, the following attributes are exported.
+
 - `id` - (String) The ID of the record collection
 - `records` - (Records) A list of records in a zone. See [Records](#records) for details.
 
 ### Records
 
-- `name` - (String) The name of the dns record
+- `id` - (String) The id of the DNS record
+- `name` - (String) The name of the DNS record
 - `ttl` - (Int) Time to Life of the record
-- `record_type` - (String) Type of this record (A, TXT, AAAA, ...)
-- `class` - (String) Class of this record
+- `type` - (String) Type of this record (allowed values are "A", "NS", "CNAME", "SOA", "PTR", "MX", "TXT", "SRV", "AAAA", "SPF")
+- `class` - (String) Class of this record (allowed values are "IN", "CH", "HS", "CS")
 - `data` - (String) Target-Server behind this record
