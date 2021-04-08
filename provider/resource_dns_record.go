@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/go-stackit"
 	"log"
+	"strings"
 )
 
 func resourceDnsRecord() *schema.Resource {
@@ -275,6 +276,63 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	//pinto := m.(*PintoProvider)
+	pinto := m.(*PintoProvider)
+
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
+	}
+
+	in := strings.Split(d.Id(), "/")
+	if len(in) != 3 {
+		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}\"")
+	}
+	// setting all information in a record var to perform the id calculation below
+	var record Record
+	record.Type = stackit.RecordType(in[0])
+	record.Name = in[1]
+	record.zone = in[2]
+
+	r, resp, gErr := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
+		Environment(pinto.environment).Provider(pinto.provider).Execute()
+	if gErr.Error() != "" {
+		handleClientError("IMPORT RECORD", gErr.Error(), resp)
+		return nil, fmt.Errorf("unable to retrieve resource information: %s", gErr.Error())
+	}
+	if len(r) > 1 {
+		return nil, fmt.Errorf("invalid Import. More than one record matched ID %s/%s/%s",record.Type,record.Name,record.zone)
+	}
+	record.Data = r[0].Data
+	record.Class = r[0].Class
+	record.Ttl = r[0].Ttl
+	record.id = computeRecordId(pinto.provider, pinto.environment, record)
+
+	// add gathered info to ResourceData
+	d.SetId(record.id)
+	err := d.Set("name", record.Name)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("zone", record.zone)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("data", record.Data)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("ttl", *record.Ttl)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("class", record.Class)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("type", string(record.Type))
+	if err != nil {
+		return nil, err
+	}
+
 	return []*schema.ResourceData{d},nil
 }

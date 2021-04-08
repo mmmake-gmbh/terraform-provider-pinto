@@ -37,6 +37,5 @@ data "pinto_dns_records" "records_env0" {
 //  name = "test.purrfect."
 //}
 
-resource "pinto_dns_zone" "testi" {
-  name = "truck.duck."
+resource "pinto_dns_record" "testi" {
 }
