@@ -18,7 +18,7 @@ First, build and install the provider.
 $ make install
 ```
 
-Then, navigate to the `examples` directory. 
+Then, navigate to the `examples` directory.
 
 ```shell
 $ cd examples

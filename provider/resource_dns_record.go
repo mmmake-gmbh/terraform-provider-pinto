@@ -23,7 +23,7 @@ func resourceDnsRecord() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"zone": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Required: true,
 			},
 			"name": {
@@ -54,7 +54,7 @@ type Record struct {
 	stackit.Record
 
 	zone string
-	id string
+	id   string
 }
 
 func printDebugRecord(record Record) {
@@ -87,7 +87,7 @@ func dataToRecord(d *schema.ResourceData) Record {
 func createRecord(pinto *PintoProvider, ctx context.Context, record Record) error {
 	log.Printf("[DEBUG] Pinto: Creating Record:")
 	printDebugRecord(record)
-	crr := stackit.NewCreateRecordRequestModel(pinto.provider,record.zone,record.Name, record.Type,record.Data)
+	crr := stackit.NewCreateRecordRequestModel(pinto.provider, record.zone, record.Name, record.Type, record.Data)
 	crr.SetEnvironment(pinto.environment)
 	crr.SetClass(stackit.RecordClass(record.Class))
 	crr.SetTtl(int32(*record.Ttl))
@@ -142,7 +142,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	record := dataToRecord(d)
-	log.Printf("[INFO] Pinto: Reading information for record with name %s in environment %s of provider %s", record.Name + "." + record.zone,
+	log.Printf("[INFO] Pinto: Reading information for record with name %s in environment %s of provider %s", record.Name+"."+record.zone,
 		pinto.environment, pinto.provider)
 	log.Printf("[DEBUG] Pinto: Reading Record:")
 	printDebugRecord(record)
@@ -300,7 +300,7 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 		return nil, fmt.Errorf("unable to retrieve resource information: %s", gErr.Error())
 	}
 	if len(r) > 1 {
-		return nil, fmt.Errorf("invalid Import. More than one record matched ID %s/%s/%s",record.Type,record.Name,record.zone)
+		return nil, fmt.Errorf("invalid Import. More than one record matched ID %s/%s/%s", record.Type, record.Name, record.zone)
 	}
 	record.Data = r[0].Data
 	record.Class = r[0].Class
@@ -334,5 +334,5 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 		return nil, err
 	}
 
-	return []*schema.ResourceData{d},nil
+	return []*schema.ResourceData{d}, nil
 }

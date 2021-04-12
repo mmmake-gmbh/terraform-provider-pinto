@@ -142,7 +142,7 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(computeZoneId(newZone.(string),pinto.environment,pinto.provider))
+	d.SetId(computeZoneId(newZone.(string), pinto.environment, pinto.provider))
 	return diags
 }
 
@@ -169,5 +169,5 @@ func resourceDnsZoneImport(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	d.SetId(computeZoneId(zoneName, pinto.environment, pinto.provider))
 
-	return []*schema.ResourceData{d},nil
+	return []*schema.ResourceData{d}, nil
 }

@@ -42,7 +42,7 @@ func dataSourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		handleClientError("[DS] ZONE READ", err.Error(), resp)
 		return diag.Errorf(err.Error())
 	}
-	d.SetId(computeZoneId(z.Name,pinto.environment,pinto.provider))
+	d.SetId(computeZoneId(z.Name, pinto.environment, pinto.provider))
 
 	return diags
 }

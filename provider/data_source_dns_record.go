@@ -13,11 +13,11 @@ func dataSourceDnsRecord() *schema.Resource {
 		ReadContext: dataSourceDnsRecordRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"zone": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Required: true,
 			},
 			"name": {
@@ -83,7 +83,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.Errorf(gErr.Error())
 	}
 	if len(r) > 1 {
-		return diag.Errorf("Cannot uniquely identify a resource with (name=%s, zone=%s, type=%s, provider=%s, environment=%s). " +
+		return diag.Errorf("Cannot uniquely identify a resource with (name=%s, zone=%s, type=%s, provider=%s, environment=%s). "+
 			"Wanted 1, got %d", name, zone, _type, pinto.provider, pinto.environment, len(r))
 	}
 

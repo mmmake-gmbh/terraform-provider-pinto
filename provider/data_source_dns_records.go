@@ -18,15 +18,15 @@ func dataSourceDnsRecords() *schema.Resource {
 				Computed: true,
 			},
 			"zone": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Required: true,
 			},
 			"record_type": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"name": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"records": {
@@ -35,7 +35,7 @@ func dataSourceDnsRecords() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Type: schema.TypeString,
+							Type:     schema.TypeString,
 							Computed: true,
 						},
 						"name": {
@@ -94,8 +94,8 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.Errorf(err.Error())
 	}
 
-	records :=  make([]interface{}, len(rrecords), len(rrecords))
-	for i,r := range rrecords {
+	records := make([]interface{}, len(rrecords), len(rrecords))
+	for i, r := range rrecords {
 		idRecord := recordToRecord(r, zone)
 		idRecord.id = computeRecordId(pinto.provider, pinto.environment, idRecord)
 		record := make(map[string]interface{})
@@ -109,7 +109,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	zoneId := strings.TrimSuffix(zone, ".") + "."
-	d.SetId(zoneId + pinto.environment + "." +  pinto.provider + ".")
+	d.SetId(zoneId + pinto.environment + "." + pinto.provider + ".")
 	e := d.Set("records", records)
 	if e != nil {
 		return diag.FromErr(err)

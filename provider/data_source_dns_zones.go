@@ -54,15 +54,15 @@ func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.Errorf(err.Error())
 	}
 
-	zones :=  make([]interface{}, len(rz), len(rz))
-	for i,z := range rz {
+	zones := make([]interface{}, len(rz), len(rz))
+	for i, z := range rz {
 		zone := make(map[string]interface{})
-		zone["id"] = computeZoneId(z.Name,pinto.environment,pinto.provider)
+		zone["id"] = computeZoneId(z.Name, pinto.environment, pinto.provider)
 		zone["name"] = z.Name
 		zones[i] = zone
 	}
 
-	d.SetId(pinto.environment + "." +  pinto.provider + ".")
+	d.SetId(pinto.environment + "." + pinto.provider + ".")
 	e := d.Set("zones", zones)
 	if e != nil {
 		return diag.FromErr(err)
