@@ -56,10 +56,10 @@ data "pinto_dns_record" "record" {
 //  name              = "test.purrrfect."
 //}
 
-resource "pinto_dns_zone" "testi" {
-  pinto_environment = "prod1"
-}
-
-resource "pinto_dns_record" "testi2" {
-  pinto_environment = "prod1"
-}
+//resource "pinto_dns_zone" "testi" {
+//  pinto_environment = "prod1"
+//}
+//
+//resource "pinto_dns_record" "testi2" {
+//  pinto_environment = "prod1"
+//}
