@@ -22,6 +22,14 @@ func resourceDnsRecord() *schema.Resource {
 			StateContext: resourceDnsRecordImport,
 		},
 		Schema: map[string]*schema.Schema{
+			schemaProvider: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			schemaEnvironment: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"zone": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -53,8 +61,10 @@ func resourceDnsRecord() *schema.Resource {
 type Record struct {
 	stackit.Record
 
-	zone string
-	id   string
+	zone        string
+	id          string
+	environment string
+	provider    string
 }
 
 func printDebugRecord(record Record) {
@@ -62,15 +72,22 @@ func printDebugRecord(record Record) {
 		record.id, record.Name, record.zone, record.Class, record.Data, record.Type)
 }
 
-func computeRecordId(provider string, environment string, record Record) string {
-	idString := record.Data + "-" + string(record.Type) + "." + record.Name + "." + record.zone + environment + "." + provider + "."
+func computeRecordId(record Record) string {
+	idString := record.Data + "-" + string(record.Type) + "." + record.Name + "." + record.zone + record.environment + "." + record.provider + "."
 	h := sha1.New()
 	h.Write([]byte(idString))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func dataToRecord(d *schema.ResourceData) Record {
+func dataToRecord(d *schema.ResourceData, provider *PintoProvider) (Record, error) {
 	var record Record
+	s, err := getProvider(provider, d)
+	if err != nil {
+		return record, err
+	} else {
+		record.provider = s
+	}
+	record.environment = getEnvironment(provider, d)
 	record.zone = d.Get("zone").(string)
 	record.Name = d.Get("name").(string)
 	record.Type = stackit.RecordType(d.Get("type").(string))
@@ -81,20 +98,21 @@ func dataToRecord(d *schema.ResourceData) Record {
 		ttl := int64(d.Get("ttl").(int))
 		record.Ttl = &ttl
 	}
-	return record
+	return record, nil
 }
 
-func createRecord(pinto *PintoProvider, ctx context.Context, record Record) error {
+func createRecord(client *stackit.APIClient, ctx context.Context, record Record) error {
 	log.Printf("[DEBUG] Pinto: Creating Record:")
 	printDebugRecord(record)
-	crr := stackit.NewCreateRecordRequestModel(pinto.provider, record.zone, record.Name, record.Type, record.Data)
-	crr.SetEnvironment(pinto.environment)
+	crr := stackit.NewCreateRecordRequestModel(record.provider, record.zone, record.Name, record.Type, record.Data)
+	if record.environment != "" {
+		crr.SetEnvironment(record.environment)
+	}
 	crr.SetClass(stackit.RecordClass(record.Class))
 	crr.SetTtl(int32(*record.Ttl))
-	_, resp, gErr := pinto.client.RecordsApi.ApiDnsRecordsPost(ctx).CreateRecordRequestModel(*crr).Execute()
+	_, resp, gErr := client.RecordsApi.ApiDnsRecordsPost(ctx).CreateRecordRequestModel(*crr).Execute()
 	if gErr.Error() != "" {
-		handleClientError("RECORD CREATE", gErr.Error(), resp)
-		return fmt.Errorf(gErr.Error())
+		return fmt.Errorf(handleClientError("RECORD CREATE", gErr.Error(), resp))
 	}
 	return nil
 }
@@ -109,15 +127,18 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
 
-	record := dataToRecord(d)
-	record.id = computeRecordId(pinto.provider, pinto.environment, record)
+	record, err := dataToRecord(d, pinto)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	record.id = computeRecordId(record)
 	log.Printf("[INFO] Pinto: Creating record %s in environment %s of provider %s", record.id, pinto.environment, pinto.provider)
 	if !record.HasTtl() {
 		// if no TTL is set, then we use the default value 3600
 		ttl64 := int64(3600)
 		record.Ttl = &ttl64
 	}
-	err := createRecord(pinto, pctx, record)
+	err = createRecord(pinto.client, pctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -141,19 +162,24 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
 
-	record := dataToRecord(d)
+	record, err := dataToRecord(d, pinto)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	log.Printf("[INFO] Pinto: Reading information for record with name %s in environment %s of provider %s", record.Name+"."+record.zone,
 		pinto.environment, pinto.provider)
 	log.Printf("[DEBUG] Pinto: Reading Record:")
 	printDebugRecord(record)
-	r, resp, gErr := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
-		Environment(pinto.environment).Provider(pinto.provider).Execute()
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).Provider(record.provider)
+	if record.environment != "" {
+		request = request.Environment(record.environment)
+	}
+	r, resp, gErr := request.Execute()
 
 	if gErr.Error() != "" {
-		handleClientError("RECORD READ", gErr.Error(), resp)
-		return diag.Errorf(gErr.Error())
+		return diag.Errorf(handleClientError("RECORD READ", gErr.Error(), resp))
 	}
-	record.id = computeRecordId(pinto.provider, pinto.environment, record)
+	record.id = computeRecordId(record)
 	if len(r) == 0 {
 		log.Printf("[WARN] Pinto: Could not retrieve information for pinto_dns_record with id %s. Removing it from state", record.id)
 		d.SetId("")
@@ -168,24 +194,25 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func deleteRecord(pinto *PintoProvider, ctx context.Context, record Record) error {
-	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of provider %s", record.id, pinto.environment, pinto.provider)
-	log.Printf("[DEBUG] Pinto: Working in env %s of provider %s", pinto.environment, pinto.provider)
+func deleteRecord(client *stackit.APIClient, ctx context.Context, record Record) error {
+	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of provider %s", record.id, record.environment, record.provider)
+	log.Printf("[DEBUG] Pinto: Working in env %s of provider %s", record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Deleting Record:")
 	printDebugRecord(record)
 	rBody := make(map[string]string)
 
-	resp, err := pinto.client.RecordsApi.ApiDnsRecordsDelete(ctx).
+	request := client.RecordsApi.ApiDnsRecordsDelete(ctx).
 		Zone(record.zone).
-		Provider(pinto.provider).
-		Environment(pinto.environment).
+		Provider(record.provider).
 		Name(record.Name).
 		RecordType(record.Type).
-		RequestBody(rBody).
-		Execute()
+		RequestBody(rBody)
+	if record.environment != "" {
+		request = request.Environment(record.environment)
+	}
+	resp, err := request.Execute()
 	if err.Error() != "" {
-		handleClientError("RECORD DELETE", err.Error(), resp)
-		return fmt.Errorf(err.Error())
+		return fmt.Errorf(handleClientError("RECORD DELETE", err.Error(), resp))
 	}
 	return nil
 }
@@ -199,9 +226,12 @@ func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if pinto.apiKey != "" {
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
-	record := dataToRecord(d)
+	record, err := dataToRecord(d, pinto)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	record.id = d.Id()
-	err := deleteRecord(pinto, pctx, record)
+	err = deleteRecord(pinto.client, pctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -209,9 +239,17 @@ func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	return diags
 }
 
-func buildRecordsFromChange(d *schema.ResourceData) (Record, Record) {
-	newRecord := dataToRecord(d)
-	oldRecord := dataToRecord(d)
+func buildRecordsFromChange(p *PintoProvider, d *schema.ResourceData) (Record, Record, error) {
+	r, err := dataToRecord(d, p)
+	if err != nil {
+		return r, r, err
+	}
+	newRecord := r
+	r, err = dataToRecord(d, p)
+	if err != nil {
+		return r, r, err
+	}
+	oldRecord := r
 	newRecord.id = d.Id()
 	oldRecord.id = d.Id()
 	if d.HasChange("name") {
@@ -247,7 +285,7 @@ func buildRecordsFromChange(d *schema.ResourceData) (Record, Record) {
 		newRecord.Data = n.(string)
 	}
 
-	return oldRecord, newRecord
+	return oldRecord, newRecord, nil
 }
 
 func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -262,12 +300,15 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	log.Printf("[INFO] Pinto: Updating record with id %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of Records at the moment; instead we have to delete and create the Record
-	oldRecord, newRecord := buildRecordsFromChange(d)
-	err := deleteRecord(pinto, pctx, oldRecord)
+	oldRecord, newRecord, err := buildRecordsFromChange(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createRecord(pinto, pctx, newRecord)
+	err = deleteRecord(pinto.client, pctx, oldRecord)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = createRecord(pinto.client, pctx, newRecord)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -284,20 +325,26 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	in := strings.Split(d.Id(), "/")
-	if len(in) != 3 {
-		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}\"")
+	if len(in) != 5 {
+		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{provider}\"")
 	}
 	// setting all information in a record var to perform the id calculation below
 	var record Record
 	record.Type = stackit.RecordType(in[0])
 	record.Name = in[1]
 	record.zone = in[2]
+	record.environment = in[3]
+	record.provider = in[4]
 
-	r, resp, gErr := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
-		Environment(pinto.environment).Provider(pinto.provider).Execute()
+	log.Printf("[DEBUG] retrieving information for %s", d.Id())
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
+		Provider(record.provider)
+	if record.environment != "" {
+		request = request.Environment(record.environment)
+	}
+	r, resp, gErr := request.Execute()
 	if gErr.Error() != "" {
-		handleClientError("IMPORT RECORD", gErr.Error(), resp)
-		return nil, fmt.Errorf("unable to retrieve resource information: %s", gErr.Error())
+		return nil, fmt.Errorf(handleClientError("IMPORT RECORD", gErr.Error(), resp))
 	}
 	if len(r) > 1 {
 		return nil, fmt.Errorf("invalid Import. More than one record matched ID %s/%s/%s", record.Type, record.Name, record.zone)
@@ -305,11 +352,19 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	record.Data = r[0].Data
 	record.Class = r[0].Class
 	record.Ttl = r[0].Ttl
-	record.id = computeRecordId(pinto.provider, pinto.environment, record)
+	record.id = computeRecordId(record)
 
 	// add gathered info to ResourceData
 	d.SetId(record.id)
-	err := d.Set("name", record.Name)
+	err := d.Set(schemaProvider, record.provider)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set(schemaEnvironment, record.environment)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set("name", record.Name)
 	if err != nil {
 		return nil, err
 	}

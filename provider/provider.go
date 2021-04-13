@@ -23,8 +23,6 @@ type PintoProvider struct {
 }
 
 const (
-	schemaProvider     = "provider"
-	schemaEnvironment  = "environment"
 	schemaBaseUrl      = "base_url"
 	schemaTokenUrl     = "token_url"
 	schemaClientId     = "client_id"
@@ -47,21 +45,20 @@ func Provider() *schema.Provider {
 	log.Printf("[DEBUG] Pinto: Starting Provider")
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			//TODO: Should we make this optional and allow user to set this on resource level?
 			schemaProvider: {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyProvider, nil),
 			},
-			//TODO: Should we make this optional and allow user to set this on resource level?
 			schemaEnvironment: {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyEnvironment, nil),
 			},
+			//TODO: make optional when a fixed base url exists
 			schemaBaseUrl: {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyBaseUrl, "https://pinto.irgendwo.co"),
 			},
 			schemaTokenUrl: {
@@ -150,8 +147,18 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	provider := PintoProvider{
 		apiKey: "",
 	}
-	provider.provider = d.Get(schemaProvider).(string)
-	provider.environment = d.Get(schemaEnvironment).(string)
+	_, ok := d.GetOk(schemaProvider)
+	if ok {
+		provider.provider = d.Get(schemaProvider).(string)
+	} else {
+		provider.provider = ""
+	}
+	_, ok = d.GetOk(schemaEnvironment)
+	if ok {
+		provider.environment = d.Get(schemaEnvironment).(string)
+	} else {
+		provider.environment = ""
+	}
 
 	clientConf := stackit.NewConfiguration()
 	clientConf.Servers[0].URL = d.Get(schemaBaseUrl).(string)

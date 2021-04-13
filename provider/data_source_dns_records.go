@@ -13,6 +13,14 @@ func dataSourceDnsRecords() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDnsRecordsRead,
 		Schema: map[string]*schema.Schema{
+			schemaProvider: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			schemaEnvironment: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -75,10 +83,19 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
 
-	zone := d.Get("zone").(string)
-	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, pinto.provider, pinto.environment)
+	environment := getEnvironment(pinto, d)
+	provider, err := getProvider(pinto, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Environment(pinto.environment).Provider(pinto.provider).Zone(zone)
+	zone := d.Get("zone").(string)
+	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, provider, environment)
+
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Provider(provider).Zone(zone)
+	if environment != "" {
+		request = request.Environment(environment)
+	}
 	val, ok := d.GetOk("record_type")
 	if ok {
 		request.RecordType(stackit.RecordType(val.(string)))
@@ -90,14 +107,13 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	rrecords, resp, err := request.Execute()
 	if err.Error() != "" {
-		handleClientError("[DS] RECORD READ", err.Error(), resp)
-		return diag.Errorf(err.Error())
+		return diag.Errorf(handleClientError("[DS] RECORD READ", err.Error(), resp))
 	}
 
 	records := make([]interface{}, len(rrecords), len(rrecords))
 	for i, r := range rrecords {
-		idRecord := recordToRecord(r, zone)
-		idRecord.id = computeRecordId(pinto.provider, pinto.environment, idRecord)
+		idRecord := recordToRecord(r, zone, environment, provider)
+		idRecord.id = computeRecordId(idRecord)
 		record := make(map[string]interface{})
 		record["name"] = r.Name
 		record["type"] = r.Type
@@ -109,7 +125,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	zoneId := strings.TrimSuffix(zone, ".") + "."
-	d.SetId(zoneId + pinto.environment + "." + pinto.provider + ".")
+	d.SetId(zoneId + environment + "." + provider + ".")
 	e := d.Set("records", records)
 	if e != nil {
 		return diag.FromErr(err)
