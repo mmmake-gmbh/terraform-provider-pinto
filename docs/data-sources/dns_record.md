@@ -13,10 +13,10 @@ description: |-
 
 ```terraform
 data "pinto_dns_record" "my_record" {
-  pinto_providoer = "digitalocean"
-  zone            = "my.zone.com."
-  name            = "my_record_name"
-  type            = "A"
+  pinto_provider = "digitalocean"
+  zone           = "my.zone.com."
+  name           = "my_record_name"
+  type           = "A"
 }
 ```
 
