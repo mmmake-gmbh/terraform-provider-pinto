@@ -9,7 +9,9 @@ import (
 )
 
 const (
+	// using name "pinto_provider" because "provider" is a reserved word for resources and data sources
 	schemaProvider    = "pinto_provider"
+	// using name "pinto_environment" to keep the same naming schema as schemaProvider
 	schemaEnvironment = "pinto_environment"
 )
 
