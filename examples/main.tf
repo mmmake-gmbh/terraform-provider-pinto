@@ -7,6 +7,8 @@ terraform {
 }
 
 provider "pinto" {
+  base_url      = "https://pinto.irgendwo.co"
+  token_url     = "https://auth.pinto.irgendwo.co/connect/token"
   client_id     = "machineclient"
   client_secret = "Secret123$"
   client_scope  = "openapigateway,nexus"

@@ -59,12 +59,12 @@ func Provider() *schema.Provider {
 			schemaBaseUrl: {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc(envKeyBaseUrl, "https://pinto.irgendwo.co"),
+				DefaultFunc: schema.EnvDefaultFunc(envKeyBaseUrl, nil),
 			},
 			schemaTokenUrl: {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc(envKeyTokenUrl, "https://auth.pinto.irgendwo.co/connect/token"),
+				DefaultFunc: schema.EnvDefaultFunc(envKeyTokenUrl, nil),
 			},
 			schemaClientId: {
 				Type:        schema.TypeString,
