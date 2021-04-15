@@ -13,12 +13,15 @@ The records data source allows for the retrieval of existing records of a zone.
 
 ```terraform
 data "pinto_dns_records" "my_records" {
-  zone = "my.zone.com."
+  pinto_provider = "digitalocean"
+  zone           = "my.zone.com."
 }
 ```
 
 ## Argument Reference
 
+- `pinto_provider` - (String, Optional) Provider that pinto will use to store DNS entries (Required if provider is not set globally for the terraform provider)
+- `pinto_environment` - (String, Optional) Environment at the provider that will be used to sore DNS entries
 - `zone` - (String, Required) The name of the zone
 - `name` - (String, Optional) Filter records per name
 - `record_type` - (String, Optional) Filter records per record type

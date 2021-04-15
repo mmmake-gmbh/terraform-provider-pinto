@@ -13,14 +13,17 @@ description: |-
 
 ```terraform
 data "pinto_dns_record" "my_record" {
-  zone = "my.zone.com."
-  name = "my_record_name"
-  type = "A"
+  pinto_provider = "digitalocean"
+  zone           = "my.zone.com."
+  name           = "my_record_name"
+  type           = "A"
 }
 ```
 
 ## Argument Reference
 
+- `pinto_provider` - (String, Optional) Provider that pinto will use to store DNS entries (Required if provider is not set globally for the terraform provider)
+- `pinto_environment` - (String, Optional) Environment at the provider that will be used to sore DNS entries
 - `zone` - (String, Required) The name of the zone
 - `name` - (String, Required) Filter records per name (allowed values are "A", "NS", "CNAME", "SOA", "PTR", "MX", "TXT", "SRV", "AAAA", "SPF")
 - `type` - (String, Required) Filter records per record type (allowed values are "IN", "CH", "HS", "CS")

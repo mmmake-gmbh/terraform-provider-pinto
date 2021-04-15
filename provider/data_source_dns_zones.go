@@ -12,6 +12,14 @@ func dataSourceDnsZones() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDnsZonesRead,
 		Schema: map[string]*schema.Schema{
+			schemaProvider: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			schemaEnvironment: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -46,23 +54,37 @@ func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m inter
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
 
+	environment := getEnvironment(pinto, d)
+	provider, err := getProvider(pinto, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	log.Printf("[INFO] Pinto: Read zones at %s for %s \n", pinto.provider, pinto.environment)
 
-	rz, resp, err := pinto.client.ZonesApi.ApiDnsZonesGet(pctx).Provider(pinto.provider).Environment(pinto.environment).Execute()
+	request := pinto.client.ZonesApi.ApiDnsZonesGet(pctx).Provider(provider)
+	if environment != "" {
+		request = request.Environment(environment)
+	}
+	rz, resp, err := request.Execute()
 	if err.Error() != "" {
-		handleClientError("[DS] ZONES READ", err.Error(), resp)
-		return diag.Errorf(err.Error())
+		return diag.Errorf(handleClientError("[DS] ZONES READ", err.Error(), resp))
 	}
 
 	zones := make([]interface{}, len(rz), len(rz))
 	for i, z := range rz {
+		temp := Zone{
+			name:        z.Name,
+			environment: environment,
+			provider:    provider,
+		}
 		zone := make(map[string]interface{})
-		zone["id"] = computeZoneId(z.Name, pinto.environment, pinto.provider)
+		zone["id"] = computeZoneId(temp)
 		zone["name"] = z.Name
 		zones[i] = zone
 	}
 
-	d.SetId(pinto.environment + "." + pinto.provider + ".")
+	d.SetId(environment + "." + provider + ".")
 	e := d.Set("zones", zones)
 	if e != nil {
 		return diag.FromErr(err)

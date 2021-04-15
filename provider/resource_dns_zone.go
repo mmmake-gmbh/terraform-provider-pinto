@@ -20,6 +20,14 @@ func resourceDnsZone() *schema.Resource {
 			StateContext: resourceDnsZoneImport,
 		},
 		Schema: map[string]*schema.Schema{
+			schemaProvider: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			schemaEnvironment: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -28,22 +36,42 @@ func resourceDnsZone() *schema.Resource {
 	}
 }
 
-func computeZoneId(zoneName string, environment string, provider string) string {
-	z := strings.TrimSuffix(zoneName, ".") + "."
-	return z + environment + "." + provider + "."
+type Zone struct {
+	name        string
+	environment string
+	provider    string
 }
 
-func createZone(pinto *PintoProvider, ctx context.Context, zone string) error {
-	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of provider %s", zone, pinto.environment, pinto.provider)
-	request := pinto.client.ZonesApi.ApiDnsZonesPost(ctx).CreateZoneRequestModel(stackit.CreateZoneRequestModel{
-		Provider:    pinto.provider,
-		Environment: *stackit.NewNullableString(&pinto.environment),
-		Name:        zone,
+func createZoneFromData(p *PintoProvider, d *schema.ResourceData) (Zone, error) {
+	var zone Zone
+	environment := getEnvironment(p, d)
+	provider, err := getProvider(p, d)
+	if err != nil {
+		return zone, err
+	}
+	zone.provider = provider
+	zone.environment = environment
+
+	zone.name = d.Get("name").(string)
+
+	return zone, nil
+}
+
+func computeZoneId(zone Zone) string {
+	z := strings.TrimSuffix(zone.name, ".") + "."
+	return z + zone.environment + "." + zone.provider + "."
+}
+
+func createZone(client *stackit.APIClient, ctx context.Context, zone Zone) error {
+	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
+	request := client.ZonesApi.ApiDnsZonesPost(ctx).CreateZoneRequestModel(stackit.CreateZoneRequestModel{
+		Provider:    zone.provider,
+		Environment: *stackit.NewNullableString(&zone.environment),
+		Name:        zone.name,
 	})
 	_, resp, gErr := request.Execute()
 	if gErr.Error() != "" {
-		handleClientError("ZONE CREATE", gErr.Error(), resp)
-		return fmt.Errorf(gErr.Error())
+		return fmt.Errorf(handleClientError("ZONE CREATE", gErr.Error(), resp))
 	}
 	return nil
 }
@@ -57,12 +85,15 @@ func resourceDnsZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if pinto.apiKey != "" {
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
-	zone := d.Get("name").(string)
-	err := createZone(pinto, pctx, zone)
+	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(computeZoneId(zone, pinto.environment, pinto.provider))
+	err = createZone(pinto.client, pctx, zone)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId(computeZoneId(zone))
 
 	return diags
 }
@@ -78,12 +109,20 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	zone := d.Get("name").(string)
-	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, pinto.provider, pinto.environment)
+	environment := getEnvironment(pinto, d)
+	provider, err := getProvider(pinto, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, provider, environment)
 
-	z, resp, gErr := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(pinto.provider).Environment(pinto.environment).Execute()
+	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(provider)
+	if environment != "" {
+		request = request.Environment(environment)
+	}
+	z, resp, gErr := request.Execute()
 	if gErr.Error() != "" {
-		handleClientError("ZONE READ", gErr.Error(), resp)
-		return diag.Errorf(gErr.Error())
+		return diag.Errorf(handleClientError("ZONE READ", gErr.Error(), resp))
 	}
 	e := d.Set("name", z.Name)
 	if e != nil {
@@ -93,12 +132,15 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return diags
 }
 
-func deleteZone(pinto *PintoProvider, ctx context.Context, zone string) error {
-	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of provider %s", zone, pinto.environment, pinto.provider)
-	resp, err := pinto.client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone).Provider(pinto.provider).Environment(pinto.environment).Execute()
+func deleteZone(client *stackit.APIClient, ctx context.Context, zone Zone) error {
+	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
+	request := client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone.name).Provider(zone.provider)
+	if zone.environment != "" {
+		request = request.Environment(zone.environment)
+	}
+	resp, err := request.Execute()
 	if err.Error() != "" {
-		handleClientError("ZONE DELETE", err.Error(), resp)
-		return fmt.Errorf(err.Error())
+		return fmt.Errorf(handleClientError("ZONE DELETE", err.Error(), resp))
 	}
 	return nil
 }
@@ -112,8 +154,11 @@ func resourceDnsZoneDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if pinto.apiKey != "" {
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
-	zone := d.Get("name").(string)
-	err := deleteZone(pinto, pctx, zone)
+	zone, err := createZoneFromData(pinto, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = deleteZone(pinto.client, pctx, zone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -133,16 +178,22 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of zones at the moment; instead we have to delete and create the zone
-	oldZone, newZone := d.GetChange("name")
-	err := deleteZone(pinto, ctx, oldZone.(string))
+	oldZone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createZone(pinto, ctx, newZone.(string))
+	newZone, _ := createZoneFromData(pinto, d)
+	oldZoneS, newZoneS := d.GetChange("name")
+	oldZone.name = oldZoneS.(string)
+	newZone.name = newZoneS.(string)
+	err = deleteZone(pinto.client, ctx, oldZone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(computeZoneId(newZone.(string), pinto.environment, pinto.provider))
+	err = createZone(pinto.client, ctx, newZone)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }
 
@@ -158,16 +209,31 @@ func resourceDnsZoneImport(ctx context.Context, d *schema.ResourceData, m interf
 	// -1 because the array is of index [0,..,length-1]
 	// -3 because the last three splices contain "environment" "provider" and "" [after last . is nothing]
 	lastSplice := len(zoneSplices) - 4
+	provider := zoneSplices[len(zoneSplices)-2]
+	environment := zoneSplices[len(zoneSplices)-3]
 	zoneName := ""
 	for i := 0; i <= lastSplice; i++ {
 		zoneName = zoneName + zoneSplices[i] + "."
+	}
+	zone := Zone{
+		name:        zoneName,
+		environment: environment,
+		provider:    provider,
 	}
 	log.Printf("[DEBUG] Pinto: ZoneName = %s", zoneName)
 	err := d.Set("name", zoneName)
 	if err != nil {
 		return nil, err
 	}
-	d.SetId(computeZoneId(zoneName, pinto.environment, pinto.provider))
+	err = d.Set(schemaProvider, provider)
+	if err != nil {
+		return nil, err
+	}
+	err = d.Set(schemaEnvironment, environment)
+	if err != nil {
+		return nil, err
+	}
+	d.SetId(computeZoneId(zone))
 
 	return []*schema.ResourceData{d}, nil
 }

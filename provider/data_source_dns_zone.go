@@ -12,6 +12,14 @@ func dataSourceDnsZone() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceDnsZoneRead,
 		Schema: map[string]*schema.Schema{
+			schemaProvider: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			schemaEnvironment: {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -34,15 +42,21 @@ func dataSourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
 	}
 
-	zone := d.Get("name").(string)
-	log.Printf("[INFO] Pinto: Read Zone %s at %s for %s \n", zone, pinto.provider, pinto.environment)
-
-	z, resp, err := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(pinto.provider).Environment(pinto.environment).Execute()
-	if err.Error() != "" {
-		handleClientError("[DS] ZONE READ", err.Error(), resp)
-		return diag.Errorf(err.Error())
+	zone, err := createZoneFromData(pinto, d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
-	d.SetId(computeZoneId(z.Name, pinto.environment, pinto.provider))
+	log.Printf("[INFO] Pinto: Read Zone %s at %s for %s \n", zone.name, zone.provider, zone.environment)
+
+	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone.name).Provider(zone.provider)
+	if zone.environment != "" {
+		request = request.Environment(zone.environment)
+	}
+	_, resp, err := request.Execute()
+	if err.Error() != "" {
+		return diag.Errorf(handleClientError("[DS] ZONE READ", err.Error(), resp))
+	}
+	d.SetId(computeZoneId(zone))
 
 	return diags
 }

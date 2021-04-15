@@ -13,12 +13,15 @@ The pinto_dns_zone resource allows for the creation of DNS zones.
 
 ```terraform
 resource "pinto_dns_zone" "example_zone" {
-  name = "env0.co."
+  pinto_provider = "digitalocean"
+  name           = "env0.co."
 }
 ```
 
 ## Argument Reference
 
+- `pinto_provider` - (String, Optional) Provider that pinto will use to store DNS entries (Required if provider is not set globally for the terraform provider)
+- `pinto_environment` - (String, Optional) Environment at the provider that will be used to sore DNS entries
 - `name` - (String, Required) The name of the zone
 
 ## Attributes Reference

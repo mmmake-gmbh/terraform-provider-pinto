@@ -13,16 +13,19 @@ The pinto_dns_record resource allows for the creation of DNS records.
 
 ```terraform
 resource "pinto_dns_record" "example_record" {
-  zone = "env0.co."
-  name = "testrecord"
-  type = "A"
-  class = "IN"
-  data = "127.0.0.1"
+  pinto_provider = "digitalocean"
+  zone           = "env0.co."
+  name           = "testrecord"
+  type           = "A"
+  class          = "IN"
+  data           = "127.0.0.1"
 }
 ```
 
 ## Argument Reference
 
+- `pinto_provider` - (String, Optional) Provider that pinto will use to store DNS entries (Required if provider is not set globally for the terraform provider)
+- `pinto_environment` - (String, Optional) Environment at the provider that will be used to sore DNS entries
 - `zone` - (String, Required) The zone in which the DNS record is to be created
 - `name` - (String, Required) The name of the DNS record
 - `type` - (String, Required) The type of the DNS record (allowed values are "A", "NS", "CNAME", "SOA", "PTR", "MX", "TXT", "SRV", "AAAA", "SPF")
