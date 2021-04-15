@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.com/whizus/go-stackit"
+	"gitlab.com/whizus/gopinto"
 	cc "golang.org/x/oauth2/clientcredentials"
 )
 
@@ -16,7 +16,7 @@ type IPintoProvider interface{}
 type PintoProvider struct {
 	IPintoProvider
 
-	client      *stackit.APIClient
+	client      *gopinto.APIClient
 	apiKey      string
 	provider    string
 	environment string
@@ -160,7 +160,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		provider.environment = ""
 	}
 
-	clientConf := stackit.NewConfiguration()
+	clientConf := gopinto.NewConfiguration()
 	clientConf.Servers[0].URL = d.Get(schemaBaseUrl).(string)
 
 	val, ok := d.GetOk(schemaApiKey)
@@ -182,7 +182,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		clientConf.HTTPClient = oAuthConf.Client(context.Background())
 
 	}
-	client := stackit.NewAPIClient(clientConf)
+	client := gopinto.NewAPIClient(clientConf)
 	provider.client = client
 
 	log.Printf("[DEBUG] Pinto: %s, %s, %s \n", d.Get(schemaBaseUrl).(string), provider.provider, provider.environment)

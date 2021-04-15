@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.com/whizus/go-stackit"
+	"gitlab.com/whizus/gopinto"
 	"log"
 	"strings"
 )
@@ -80,7 +80,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	environment := getEnvironment(pinto, d)
@@ -98,7 +98,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 	val, ok := d.GetOk("record_type")
 	if ok {
-		request.RecordType(stackit.RecordType(val.(string)))
+		request.RecordType(gopinto.RecordType(val.(string)))
 	}
 	val, ok = d.GetOk("name")
 	if ok {
