@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.com/whizus/go-stackit"
+	"gitlab.com/whizus/gopinto"
 	"log"
 	"strings"
 )
@@ -62,11 +62,11 @@ func computeZoneId(zone Zone) string {
 	return z + zone.environment + "." + zone.provider + "."
 }
 
-func createZone(client *stackit.APIClient, ctx context.Context, zone Zone) error {
+func createZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
 	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
-	request := client.ZonesApi.ApiDnsZonesPost(ctx).CreateZoneRequestModel(stackit.CreateZoneRequestModel{
+	request := client.ZonesApi.ApiDnsZonesPost(ctx).CreateZoneRequestModel(gopinto.CreateZoneRequestModel{
 		Provider:    zone.provider,
-		Environment: *stackit.NewNullableString(&zone.environment),
+		Environment: *gopinto.NewNullableString(&zone.environment),
 		Name:        zone.name,
 	})
 	_, resp, gErr := request.Execute()
@@ -83,7 +83,7 @@ func resourceDnsZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
@@ -105,7 +105,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	zone := d.Get("name").(string)
@@ -132,7 +132,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return diags
 }
 
-func deleteZone(client *stackit.APIClient, ctx context.Context, zone Zone) error {
+func deleteZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
 	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
 	request := client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone.name).Provider(zone.provider)
 	if zone.environment != "" {
@@ -152,7 +152,7 @@ func resourceDnsZoneDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
@@ -173,7 +173,7 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)

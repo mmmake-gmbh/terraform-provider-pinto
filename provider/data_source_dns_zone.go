@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.com/whizus/go-stackit"
+	"gitlab.com/whizus/gopinto"
 	"log"
 )
 
@@ -39,7 +39,7 @@ func dataSourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, stackit.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	zone, err := createZoneFromData(pinto, d)
