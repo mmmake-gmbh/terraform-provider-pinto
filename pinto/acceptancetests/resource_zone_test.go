@@ -32,26 +32,25 @@ func generateZoneTestEntry(prefix string) resource.TestStep {
 	switch prefix {
 	case "prod_digitalocean":
 		return resource.TestStep{
-			ResourceName:              "pinto_dns_zone" + "." + prefix,
-			PreConfig:                 nil,
-			Taint:                     nil,
-			Config:                    zoneEntry(
+			ResourceName: "pinto_dns_zone" + "." + prefix,
+			PreConfig:    nil,
+			Taint:        nil,
+			Config: zoneEntry(
 				prefix,
 				"pinto",
 				"prod1",
 				"digitalocean",
 			),
-			Check:                     nil,
-			Destroy:                   true,
-			ImportState:               false,
-			ImportStateId:             "",
-			ImportStateIdPrefix:       "",
-			ImportStateIdFunc:         nil,
-			ImportStateCheck:          nil,
-			ImportStateVerify:         false,
-			ImportStateVerifyIgnore:   nil,
+			Check:                   nil,
+			Destroy:                 true,
+			ImportState:             false,
+			ImportStateId:           "",
+			ImportStateIdPrefix:     "",
+			ImportStateIdFunc:       nil,
+			ImportStateCheck:        nil,
+			ImportStateVerify:       false,
+			ImportStateVerifyIgnore: nil,
 		}
-		break
 	}
 	panic("please select a proper test case")
 }
@@ -68,11 +67,10 @@ func TestResourceZoneEntry(t *testing.T) {
 			PreventPostDestroyRefresh: false,
 			CheckDestroy:              nil,
 			ErrorCheck:                nil,
-			Steps:                     []resource.TestStep{
+			Steps: []resource.TestStep{
 				generateZoneTestEntry("prod_digitalocean"),
 			},
 		},
 	)
 
 }
-

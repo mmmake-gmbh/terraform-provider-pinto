@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-
 // TODO: clarify records and record
 // func dnsRecords(prefix string, environment string, zone string) string {
 // 	s := `
@@ -63,10 +62,10 @@ func generateTestRecordEntry(prefix string) resource.TestStep {
 	switch prefix {
 	case "prod_env_zero":
 		return resource.TestStep{
-			ResourceName:              "pinto_dns_records" + "." + prefix,
-			PreConfig:                 nil,
-			Taint:                     nil,
-			Config:                    dnsRecord(
+			ResourceName: "pinto_dns_records" + "." + prefix,
+			PreConfig:    nil,
+			Taint:        nil,
+			Config: dnsRecord(
 				prefix,
 				"pinto",
 				"A",
@@ -77,17 +76,16 @@ func generateTestRecordEntry(prefix string) resource.TestStep {
 				"digitalocean",
 				1800,
 			),
-			Check:                     nil,
-			Destroy:                   true,
-			ImportState:               false,
-			ImportStateId:             "",
-			ImportStateIdPrefix:       "",
-			ImportStateIdFunc:         nil,
-			ImportStateCheck:          nil,
-			ImportStateVerify:         false,
-			ImportStateVerifyIgnore:   nil,
+			Check:                   nil,
+			Destroy:                 true,
+			ImportState:             false,
+			ImportStateId:           "",
+			ImportStateIdPrefix:     "",
+			ImportStateIdFunc:       nil,
+			ImportStateCheck:        nil,
+			ImportStateVerify:       false,
+			ImportStateVerifyIgnore: nil,
 		}
-		break
 	}
 	panic("please select a proper test case")
 }
@@ -104,11 +102,10 @@ func TestResourceDnsRecord(t *testing.T) {
 			PreventPostDestroyRefresh: false,
 			CheckDestroy:              nil,
 			ErrorCheck:                nil,
-			Steps:                     []resource.TestStep{
+			Steps: []resource.TestStep{
 				generateTestRecordEntry("prod_env_zero"),
 			},
 		},
 	)
 
 }
-
