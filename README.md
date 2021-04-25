@@ -7,7 +7,7 @@ A custom provider for Terraform that allows the creation of resources through th
 Run the following command to build the provider
 
 ```shell
-$ go build -o terraform-provider-provider
+$ go build -o terraform-pinto-pinto
 ```
 
 ## Test sample configuration

@@ -1,4 +1,4 @@
-package provider
+package pinto
 
 import (
 	"context"
@@ -63,7 +63,7 @@ func computeZoneId(zone Zone) string {
 }
 
 func createZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
-	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
+	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of pinto %s", zone.name, zone.environment, zone.provider)
 	request := client.ZonesApi.ApiDnsZonesPost(ctx).CreateZoneRequestModel(gopinto.CreateZoneRequestModel{
 		Provider:    zone.provider,
 		Environment: *gopinto.NewNullableString(&zone.environment),
@@ -114,7 +114,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, provider, environment)
+	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for pinto %s \n", zone, provider, environment)
 
 	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(provider)
 	if environment != "" {
@@ -133,7 +133,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func deleteZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
-	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
+	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of pinto %s", zone.name, zone.environment, zone.provider)
 	request := client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone.name).Provider(zone.provider)
 	if zone.environment != "" {
 		request = request.Environment(zone.environment)
@@ -176,7 +176,7 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
-	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
+	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of pinto %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of zones at the moment; instead we have to delete and create the zone
 	oldZone, err := createZoneFromData(pinto, d)
 	if err != nil {
@@ -203,11 +203,11 @@ func resourceDnsZoneImport(ctx context.Context, d *schema.ResourceData, m interf
 	log.Printf("[INFO] Pinto: Importing zone with id %s", zoneId)
 
 	if !strings.Contains(zoneId, pinto.environment) || !strings.Contains(zoneId, pinto.provider) {
-		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{zoneName}.{environment}.{provider}.\"")
+		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{zoneName}.{environment}.{pinto}.\"")
 	}
 	zoneSplices := strings.Split(zoneId, ".")
 	// -1 because the array is of index [0,..,length-1]
-	// -3 because the last three splices contain "environment" "provider" and "" [after last . is nothing]
+	// -3 because the last three splices contain "environment" "pinto" and "" [after last . is nothing]
 	lastSplice := len(zoneSplices) - 4
 	provider := zoneSplices[len(zoneSplices)-2]
 	environment := zoneSplices[len(zoneSplices)-3]

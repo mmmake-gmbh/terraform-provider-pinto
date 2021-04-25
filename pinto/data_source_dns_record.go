@@ -1,4 +1,4 @@
-package provider
+package pinto
 
 import (
 	"context"
@@ -80,7 +80,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	zone := d.Get("zone").(string)
 	name := d.Get("name").(string)
 	_type := d.Get("type").(string)
-	log.Printf("[INFO] Pinto: Read record for name=%s, zone=%s, type=%s, provider=%s, environment=%s",
+	log.Printf("[INFO] Pinto: Read record for name=%s, zone=%s, type=%s, pinto=%s, environment=%s",
 		name, zone, _type, provider, environment)
 
 	if err != nil {
@@ -99,7 +99,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.Errorf(handleClientError("[DS] RECORD READ", gErr.Error(), resp))
 	}
 	if len(r) > 1 {
-		return diag.Errorf("Cannot uniquely identify a resource with (name=%s, zone=%s, type=%s, provider=%s, environment=%s). "+
+		return diag.Errorf("Cannot uniquely identify a resource with (name=%s, zone=%s, type=%s, pinto=%s, environment=%s). "+
 			"Wanted 1, got %d", name, zone, _type, pinto.provider, pinto.environment, len(r))
 	}
 

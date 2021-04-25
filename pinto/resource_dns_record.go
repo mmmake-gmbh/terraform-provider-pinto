@@ -1,4 +1,4 @@
-package provider
+package pinto
 
 import (
 	"context"
@@ -132,7 +132,7 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 	record.id = computeRecordId(record)
-	log.Printf("[INFO] Pinto: Creating record %s in environment %s of provider %s", record.id, pinto.environment, pinto.provider)
+	log.Printf("[INFO] Pinto: Creating record %s in environment %s of pinto %s", record.id, pinto.environment, pinto.provider)
 	if !record.HasTtl() {
 		// if no TTL is set, then we use the default value 3600
 		ttl64 := int64(3600)
@@ -166,7 +166,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	log.Printf("[INFO] Pinto: Reading information for record with name %s in environment %s of provider %s", record.Name+"."+record.zone,
+	log.Printf("[INFO] Pinto: Reading information for record with name %s in environment %s of pinto %s", record.Name+"."+record.zone,
 		pinto.environment, pinto.provider)
 	log.Printf("[DEBUG] Pinto: Reading Record:")
 	printDebugRecord(record)
@@ -195,8 +195,8 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func deleteRecord(client *gopinto.APIClient, ctx context.Context, record Record) error {
-	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of provider %s", record.id, record.environment, record.provider)
-	log.Printf("[DEBUG] Pinto: Working in env %s of provider %s", record.environment, record.provider)
+	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of pinto %s", record.id, record.environment, record.provider)
+	log.Printf("[DEBUG] Pinto: Working in env %s of pinto %s", record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Deleting Record:")
 	printDebugRecord(record)
 	rBody := make(map[string]string)
@@ -298,7 +298,7 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
-	log.Printf("[INFO] Pinto: Updating record with id %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
+	log.Printf("[INFO] Pinto: Updating record with id %s in environment %s of pinto %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of Records at the moment; instead we have to delete and create the Record
 	oldRecord, newRecord, err := buildRecordsFromChange(pinto, d)
 	if err != nil {
@@ -326,7 +326,7 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 
 	in := strings.Split(d.Id(), "/")
 	if len(in) != 5 {
-		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{provider}\"")
+		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{pinto}\"")
 	}
 	// setting all information in a record var to perform the id calculation below
 	var record Record

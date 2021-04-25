@@ -1,4 +1,4 @@
-package provider
+package pinto
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// using name "pinto_provider" because "provider" is a reserved word for resources and data sources
+	// using name "pinto_provider" because "pinto" is a reserved word for resources and data sources
 	schemaProvider = "pinto_provider"
 	// using name "pinto_environment" to keep the same naming schema as schemaProvider
 	schemaEnvironment = "pinto_environment"
@@ -38,7 +38,7 @@ func getProvider(p *PintoProvider, d *schema.ResourceData) (string, error) {
 		if p.provider != "" {
 			res = p.provider
 		} else {
-			return "", fmt.Errorf("invalid configuration. %s has to be set on provider or resource-level", schemaProvider)
+			return "", fmt.Errorf("invalid configuration. %s has to be set on pinto or resource-level", schemaProvider)
 		}
 	}
 	return res, nil

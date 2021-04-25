@@ -1,4 +1,4 @@
-package provider
+package pinto
 
 import (
 	"github.com/stretchr/testify/require"
