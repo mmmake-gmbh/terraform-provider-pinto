@@ -1,9 +1,10 @@
-package acceptancetests
+package pinto
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func zoneEntry(
@@ -12,15 +13,12 @@ func zoneEntry(
 	provider string,
 	environment string,
 ) string {
-	s := `
+	return fmt.Sprintf(`
 resource "pinto_dns_zone" "record_%s" {
 	name 			  	= "%s"
 	pinto_provider		= "%s"
 	pinto_environment	= "%s"
-}
-`
-	return fmt.Sprintf(
-		s,
+}`,
 		prefix,
 		name,
 		provider,
