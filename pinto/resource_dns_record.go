@@ -122,23 +122,19 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
 
 	record, err := dataToRecord(d, pinto)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	record.id = computeRecordId(record)
-	log.Printf("[INFO] Pinto: Creating record %s in environment %s of pinto %s", record.id, pinto.environment, pinto.provider)
+	log.Printf("[INFO] Pinto: Creating record %s in environment %s of provider %s", record.id, pinto.environment, pinto.provider)
 	if !record.HasTtl() {
 		// if no TTL is set, then we use the default value 3600
 		ttl64 := int64(3600)
 		record.Ttl = &ttl64
 	}
-	err = createRecord(pinto.client, pctx, record)
+	err = createRecord(pinto.client, ctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -157,20 +153,15 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
-
 	record, err := dataToRecord(d, pinto)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	log.Printf("[INFO] Pinto: Reading information for record with name %s in environment %s of pinto %s", record.Name+"."+record.zone,
+	log.Printf("[INFO] Pinto: Reading information for record with name %s in environment %s of provider %s", record.Name+"."+record.zone,
 		pinto.environment, pinto.provider)
 	log.Printf("[DEBUG] Pinto: Reading Record:")
 	printDebugRecord(record)
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).Provider(record.provider)
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(ctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).Provider(record.provider)
 	if record.environment != "" {
 		request = request.Environment(record.environment)
 	}
@@ -195,7 +186,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 }
 
 func deleteRecord(client *gopinto.APIClient, ctx context.Context, record Record) error {
-	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of pinto %s", record.id, record.environment, record.provider)
+	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of provider %s", record.id, record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Working in env %s of pinto %s", record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Deleting Record:")
 	printDebugRecord(record)
@@ -222,16 +213,12 @@ func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
 	record, err := dataToRecord(d, pinto)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	record.id = d.Id()
-	err = deleteRecord(pinto.client, pctx, record)
+	err = deleteRecord(pinto.client, ctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -293,22 +280,17 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
-
-	log.Printf("[INFO] Pinto: Updating record with id %s in environment %s of pinto %s", d.Id(), pinto.environment, pinto.provider)
+	log.Printf("[INFO] Pinto: Updating record with id %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of Records at the moment; instead we have to delete and create the Record
 	oldRecord, newRecord, err := buildRecordsFromChange(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = deleteRecord(pinto.client, pctx, oldRecord)
+	err = deleteRecord(pinto.client, ctx, oldRecord)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createRecord(pinto.client, pctx, newRecord)
+	err = createRecord(pinto.client, ctx, newRecord)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -319,14 +301,9 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	pinto := m.(*PintoProvider)
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
-
 	in := strings.Split(d.Id(), "/")
 	if len(in) != 5 {
-		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{pinto}\"")
+		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{provider}\"")
 	}
 	// setting all information in a record var to perform the id calculation below
 	var record Record
@@ -337,7 +314,7 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	record.provider = in[4]
 
 	log.Printf("[DEBUG] retrieving information for %s", d.Id())
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(ctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
 		Provider(record.provider)
 	if record.environment != "" {
 		request = request.Environment(record.environment)

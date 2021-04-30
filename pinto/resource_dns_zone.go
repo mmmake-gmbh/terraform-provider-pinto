@@ -3,11 +3,12 @@ package pinto
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/gopinto"
-	"log"
-	"strings"
 )
 
 func resourceDnsZone() *schema.Resource {
@@ -63,7 +64,7 @@ func computeZoneId(zone Zone) string {
 }
 
 func createZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
-	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of pinto %s", zone.name, zone.environment, zone.provider)
+	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
 	request := client.ZonesApi.ApiDnsZonesPost(ctx).CreateZoneRequestModel(gopinto.CreateZoneRequestModel{
 		Provider:    zone.provider,
 		Environment: *gopinto.NewNullableString(&zone.environment),
@@ -81,15 +82,11 @@ func resourceDnsZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createZone(pinto.client, pctx, zone)
+	err = createZone(pinto.client, ctx, zone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -103,20 +100,15 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
-
 	zone := d.Get("name").(string)
 	environment := getEnvironment(pinto, d)
 	provider, err := getProvider(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for pinto %s \n", zone, provider, environment)
+	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, provider, environment)
 
-	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(provider)
+	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(ctx, zone).Provider(provider)
 	if environment != "" {
 		request = request.Environment(environment)
 	}
@@ -133,7 +125,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 }
 
 func deleteZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
-	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of pinto %s", zone.name, zone.environment, zone.provider)
+	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
 	request := client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone.name).Provider(zone.provider)
 	if zone.environment != "" {
 		request = request.Environment(zone.environment)
@@ -150,15 +142,11 @@ func resourceDnsZoneDelete(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = deleteZone(pinto.client, pctx, zone)
+	err = deleteZone(pinto.client, ctx, zone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -171,12 +159,7 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
-
-	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of pinto %s", d.Id(), pinto.environment, pinto.provider)
+	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of zones at the moment; instead we have to delete and create the zone
 	oldZone, err := createZoneFromData(pinto, d)
 	if err != nil {

@@ -2,10 +2,11 @@ package pinto
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -38,7 +39,7 @@ func getProvider(p *PintoProvider, d *schema.ResourceData) (string, error) {
 		if p.provider != "" {
 			res = p.provider
 		} else {
-			return "", fmt.Errorf("invalid configuration. %s has to be set on pinto or resource-level", schemaProvider)
+			return "", fmt.Errorf("invalid configuration. %s has to be set on provider or resource-level", schemaProvider)
 		}
 	}
 	return res, nil

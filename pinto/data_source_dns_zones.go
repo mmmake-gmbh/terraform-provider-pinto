@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.com/whizus/gopinto"
 	"log"
 )
 
@@ -49,11 +48,6 @@ func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m inter
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
-
 	environment := getEnvironment(pinto, d)
 	provider, err := getProvider(pinto, d)
 	if err != nil {
@@ -62,7 +56,7 @@ func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	log.Printf("[INFO] Pinto: Read zones at %s for %s \n", pinto.provider, pinto.environment)
 
-	request := pinto.client.ZonesApi.ApiDnsZonesGet(pctx).Provider(provider)
+	request := pinto.client.ZonesApi.ApiDnsZonesGet(ctx).Provider(provider)
 	if environment != "" {
 		request = request.Environment(environment)
 	}

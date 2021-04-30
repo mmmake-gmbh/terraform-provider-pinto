@@ -2,10 +2,11 @@ package pinto
 
 import (
 	"context"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/gopinto"
-	"log"
 )
 
 func dataSourceDnsRecord() *schema.Resource {
@@ -70,23 +71,19 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
-	}
-
 	environment := getEnvironment(pinto, d)
 	provider, err := getProvider(pinto, d)
 	zone := d.Get("zone").(string)
 	name := d.Get("name").(string)
 	_type := d.Get("type").(string)
-	log.Printf("[INFO] Pinto: Read record for name=%s, zone=%s, type=%s, pinto=%s, environment=%s",
+
+	log.Printf("[INFO] Pinto: Read record for name=%s, zone=%s, type=%s, provider=%s, environment=%s",
 		name, zone, _type, provider, environment)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(ctx).
 		Provider(provider).
 		Zone(zone).
 		Name(name).
@@ -95,40 +92,45 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 		request = request.Environment(environment)
 	}
 	r, resp, gErr := request.Execute()
+
 	if gErr.Error() != "" {
 		return diag.Errorf(handleClientError("[DS] RECORD READ", gErr.Error(), resp))
 	}
 	if len(r) > 1 {
-		return diag.Errorf("Cannot uniquely identify a resource with (name=%s, zone=%s, type=%s, pinto=%s, environment=%s). "+
+		return diag.Errorf("Cannot uniquely identify a resource with (name=%s, zone=%s, type=%s, provider=%s, environment=%s). "+
 			"Wanted 1, got %d", name, zone, _type, pinto.provider, pinto.environment, len(r))
 	}
 
-	record := recordToRecord(r[0], zone, environment, provider)
-	record.id = computeRecordId(record)
-	d.SetId(record.id)
-	err = d.Set("name", record.Name)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("zone", record.zone)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("data", record.Data)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("ttl", *record.Ttl)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("class", record.Class)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("type", string(record.Type))
-	if err != nil {
-		return diag.FromErr(err)
+	if len(r) > 0 {
+		record := recordToRecord(r[0], zone, environment, provider)
+		record.id = computeRecordId(record)
+
+		d.SetId(record.id)
+		err = d.Set("name", record.Name)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		err = d.Set("zone", record.zone)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		err = d.Set("data", record.Data)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		err = d.Set("ttl", *record.Ttl)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		err = d.Set("class", record.Class)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		err = d.Set("type", string(record.Type))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		return diags
 	}
 
 	return diags

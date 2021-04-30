@@ -49,7 +49,6 @@ func TestResourceDnsRecord(t *testing.T) {
 			IsUnitTest:                false,
 			PreCheck:                  func() { PreCheck(t) },
 			ProviderFactories:         providerFactory,
-			PreventPostDestroyRefresh: false,
 			Steps: []resource.TestStep{
 				{
 					Config: testResourceDNSRecord(

@@ -40,8 +40,23 @@ const (
 	envKeyClientScope  = "PINTO_CLIENT_SCOPE"
 )
 
+func NewProvider(
+	client *gopinto.APIClient,
+	apiKey string,
+	provider string,
+	environment string,
+) *PintoProvider {
+	return &PintoProvider{
+		IPintoProvider: nil,
+		client:         client,
+		apiKey:         apiKey,
+		provider:       provider,
+		environment:    environment,
+	}
+}
+
 // Provider -
-func Provider() *schema.Provider {
+func Provider(client *gopinto.APIClient) *schema.Provider {
 	log.Printf("[DEBUG] Pinto: Starting Provider")
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
@@ -98,7 +113,77 @@ func Provider() *schema.Provider {
 			"pinto_dns_record":  dataSourceDnsRecord(),
 			"pinto_dns_records": dataSourceDnsRecords(),
 		},
-		ConfigureContextFunc: providerConfigure,
+		ConfigureContextFunc: func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
+			// override the provider client e.g. with a mock client used during tests and disable diagnostics
+			if client != nil {
+				return NewProvider(
+					client,
+					"",
+					"",
+					"",
+					), nil
+			}
+			var diags diag.Diagnostics
+
+			clientConf := gopinto.NewConfiguration()
+			// TODO: Override this with an DEBUG env if needed
+			clientConf.Debug = false
+			client := gopinto.NewAPIClient(clientConf)
+
+			// clientConf.UserAgent = fmt.Sprintf("HashiCorp Terraform/%s (+https://www.terraform.io) Terraform Plugin SDK/%s", provider.TerraformVersion, meta.SDKVersionString())
+			clientConf.Servers[0].URL = data.Get(schemaBaseUrl).(string)
+
+			// global settings
+			schemaProvider := data.Get(schemaProvider).(string)
+			schemaEnvironment := data.Get(schemaEnvironment).(string)
+
+			// oauth configuration
+			schemaClientId := data.Get(schemaClientId).(string)
+			schemaClientSecret := data.Get(schemaClientSecret).(string)
+
+			// oauth validation
+			if schemaClientId != "" && schemaClientSecret != "" {
+				oAuthConf, err := configureOAuthClient(data)
+				clientConf.HTTPClient = oAuthConf.Client(context.Background())
+
+				client := gopinto.NewAPIClient(clientConf)
+
+				if err != nil {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Error,
+						Summary:  "Unable to create Pinto client",
+						Detail:   err.Error(),
+					})
+					return nil, diags
+				}
+
+				apiKey := data.Get(schemaApiKey).(string)
+				if apiKey != "" {
+					context.WithValue(ctx, gopinto.ContextAPIKeys, apiKey)
+				} else {
+					diags = append(diags, diag.Diagnostic{
+						Severity: diag.Warning,
+						Summary:  "Api key missing",
+						Detail:   "No api key was given. Please set one to use the ",
+					})
+				}
+
+				return NewProvider(
+					client,
+					apiKey,
+					schemaProvider,
+					schemaEnvironment,
+				), diags
+			}
+
+			// returns the default provider without oAuth configured
+			return NewProvider(
+				client,
+				"",
+				schemaProvider,
+				schemaEnvironment,
+			), diags
+		},
 	}
 }
 
@@ -138,53 +223,4 @@ func configureOAuthClient(d *schema.ResourceData) (cc.Config, error) {
 	}
 
 	return oauthConfig, nil
-}
-
-func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	// Warning or errors can be collected in a slice type
-	var diags diag.Diagnostics
-
-	provider := PintoProvider{
-		apiKey: "",
-	}
-	_, ok := d.GetOk(schemaProvider)
-	if ok {
-		provider.provider = d.Get(schemaProvider).(string)
-	} else {
-		provider.provider = ""
-	}
-	_, ok = d.GetOk(schemaEnvironment)
-	if ok {
-		provider.environment = d.Get(schemaEnvironment).(string)
-	} else {
-		provider.environment = ""
-	}
-
-	clientConf := gopinto.NewConfiguration()
-	clientConf.Servers[0].URL = d.Get(schemaBaseUrl).(string)
-
-	val, ok := d.GetOk(schemaApiKey)
-	if ok {
-		provider.apiKey = val.(string)
-	}
-	_, ok = d.GetOk(schemaClientId)
-	if ok {
-		oAuthConf, err := configureOAuthClient(d)
-		if err != nil {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Unable to create Pinto client",
-				Detail:   "Require " + schemaClientId + " and " + schemaClientSecret + " to be set together for client-credentials authentication",
-			})
-			return nil, diags
-		}
-		//TODO: Do we need to move this into a utils class and use a different context each time?
-		clientConf.HTTPClient = oAuthConf.Client(context.Background())
-
-	}
-	client := gopinto.NewAPIClient(clientConf)
-	provider.client = client
-
-	log.Printf("[DEBUG] Pinto: %s, %s, %s \n", d.Get(schemaBaseUrl).(string), provider.provider, provider.environment)
-	return &provider, diags
 }
