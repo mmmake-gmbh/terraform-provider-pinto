@@ -17,17 +17,18 @@ const (
 )
 
 func handleClientError(op string, errorString string, httpResponse *http.Response) string {
-	bodyBytes, err := ioutil.ReadAll(httpResponse.Body)
-	bodyString := ""
-	if err == nil {
-		bodyString = string(bodyBytes)
-		log.Printf("[ERROR] Unable to perform operation %s. \n Reason: %s \n Details: %s", op, errorString, bodyString)
-
-		return errorString + ": " + bodyString
-	} else {
-		log.Printf("[ERROR] Unable to perform operation %s. \n Reason: %s", op, errorString)
-		return errorString
+	// http.Response has body which can be returned as a message to the user
+	if httpResponse.Body != nil {
+		bodyBytes, err := ioutil.ReadAll(httpResponse.Body)
+		bodyString := ""
+		if err == nil {
+			bodyString = string(bodyBytes)
+			log.Printf("[ERROR] Unable to perform operation %s. \n Reason: %s \n Details: %s", op, errorString, bodyString)
+			return errorString + ": " + bodyString
+		}
 	}
+	// otherwise return a simple error message
+	return errorString
 }
 
 func getProvider(p *PintoProvider, d *schema.ResourceData) (string, error) {

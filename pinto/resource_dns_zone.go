@@ -186,7 +186,7 @@ func resourceDnsZoneImport(ctx context.Context, d *schema.ResourceData, m interf
 	log.Printf("[INFO] Pinto: Importing zone with id %s", zoneId)
 
 	if !strings.Contains(zoneId, pinto.environment) || !strings.Contains(zoneId, pinto.provider) {
-		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{zoneName}.{environment}.{pinto}.\"")
+		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{zoneName}.{environment}.{provider}.\"")
 	}
 	zoneSplices := strings.Split(zoneId, ".")
 	// -1 because the array is of index [0,..,length-1]

@@ -93,7 +93,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	r, resp, gErr := request.Execute()
 
-	if gErr.Error() != "" {
+	if gErr.Error() != "" || resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] RECORD READ", gErr.Error(), resp))
 	}
 	if len(r) > 1 {
@@ -101,37 +101,35 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 			"Wanted 1, got %d", name, zone, _type, pinto.provider, pinto.environment, len(r))
 	}
 
-	if len(r) > 0 {
-		record := recordToRecord(r[0], zone, environment, provider)
-		record.id = computeRecordId(record)
+	record := recordToRecord(r[0], zone, environment, provider)
+	record.id = computeRecordId(record)
 
-		d.SetId(record.id)
-		err = d.Set("name", record.Name)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = d.Set("zone", record.zone)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = d.Set("data", record.Data)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = d.Set("ttl", *record.Ttl)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = d.Set("class", record.Class)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = d.Set("type", string(record.Type))
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		return diags
+	d.SetId(record.id)
+	err = d.Set("name", record.Name)
+	if err != nil {
+		return diag.FromErr(err)
 	}
+	err = d.Set("zone", record.zone)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = d.Set("data", record.Data)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = d.Set("ttl", *record.Ttl)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = d.Set("class", record.Class)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = d.Set("type", string(record.Type))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diags
 
 	return diags
 }

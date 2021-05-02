@@ -34,7 +34,10 @@ test:
 	echo $(TEST) | xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
 testacc:
-	TF_ACC=1 TF_ACC_MOCK=1 go test $(TEST) -v $(TESTARGS) -timeout 120m -cover
+	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m -cover
+
+testreg:
+	TF_ACC=pinto-test go test $(TEST) -v $(TESTARGS) -timeout 120m -cover
 
 clean:
 	rm -rf examples/.terraform
