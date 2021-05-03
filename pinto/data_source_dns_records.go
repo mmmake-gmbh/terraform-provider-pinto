@@ -78,6 +78,11 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	environment := getEnvironment(pinto, d)
 	provider, err := getProvider(pinto, d)
 
@@ -88,7 +93,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	zone := d.Get("zone").(string)
 	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, provider, environment)
 
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(ctx).Provider(provider).Zone(zone)
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Provider(provider).Zone(zone)
 	if environment != "" {
 		request = request.Environment(environment)
 	}

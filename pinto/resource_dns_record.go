@@ -153,6 +153,11 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	record, err := dataToRecord(d, pinto)
 	if err != nil {
 		return diag.FromErr(err)
@@ -161,13 +166,13 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		pinto.environment, pinto.provider)
 	log.Printf("[DEBUG] Pinto: Reading Record:")
 	printDebugRecord(record)
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(ctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).Provider(record.provider)
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).Provider(record.provider)
 	if record.environment != "" {
 		request = request.Environment(record.environment)
 	}
 	r, resp, gErr := request.Execute()
 
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("RECORD READ", gErr.Error(), resp))
 	}
 	record.id = computeRecordId(record)
@@ -305,6 +310,12 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	if len(in) != 5 {
 		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{provider}\"")
 	}
+
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	// setting all information in a record var to perform the id calculation below
 	var record Record
 	record.Type = gopinto.RecordType(in[0])
@@ -314,7 +325,7 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	record.provider = in[4]
 
 	log.Printf("[DEBUG] retrieving information for %s", d.Id())
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(ctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
 		Provider(record.provider)
 	if record.environment != "" {
 		request = request.Environment(record.environment)

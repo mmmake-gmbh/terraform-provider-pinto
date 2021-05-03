@@ -113,7 +113,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 		request = request.Environment(environment)
 	}
 	z, resp, gErr := request.Execute()
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("ZONE READ", gErr.Error(), resp))
 	}
 	e := d.Set("name", z.Name)
@@ -131,7 +131,7 @@ func deleteZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error
 		request = request.Environment(zone.environment)
 	}
 	resp, err := request.Execute()
-	if err.Error() != "" {
+	if  resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("ZONE DELETE", err.Error(), resp))
 	}
 	return nil
@@ -190,7 +190,7 @@ func resourceDnsZoneImport(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	zoneSplices := strings.Split(zoneId, ".")
 	// -1 because the array is of index [0,..,length-1]
-	// -3 because the last three splices contain "environment" "pinto" and "" [after last . is nothing]
+	// -3 because the last three splices contain "environment" "provider" and "" [after last . is nothing]
 	lastSplice := len(zoneSplices) - 4
 	provider := zoneSplices[len(zoneSplices)-2]
 	environment := zoneSplices[len(zoneSplices)-3]
