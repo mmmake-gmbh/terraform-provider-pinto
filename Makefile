@@ -36,9 +36,6 @@ test:
 testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m -cover
 
-testreg:
-	TF_ACC=pinto-test go test $(TEST) -v $(TESTARGS) -timeout 120m -cover
-
 clean:
 	rm -rf examples/.terraform
 	rm -rf examples/.terraform.lock.hcl
