@@ -124,7 +124,7 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	record, err := dataToRecord(d, pinto)
