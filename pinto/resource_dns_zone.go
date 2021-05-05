@@ -71,7 +71,7 @@ func createZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error
 		Name:        zone.name,
 	})
 	_, resp, gErr := request.Execute()
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400{
 		return fmt.Errorf(handleClientError("ZONE CREATE", gErr.Error(), resp))
 	}
 	return nil
@@ -82,11 +82,16 @@ func resourceDnsZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createZone(pinto.client, ctx, zone)
+	err = createZone(pinto.client, pctx, zone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -102,7 +107,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	zone := d.Get("name").(string)
@@ -149,7 +154,7 @@ func resourceDnsZoneDelete(ctx context.Context, d *schema.ResourceData, m interf
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	zone, err := createZoneFromData(pinto, d)
@@ -171,7 +176,7 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)

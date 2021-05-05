@@ -159,7 +159,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	record, err := dataToRecord(d, pinto)
@@ -224,7 +224,7 @@ func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	record, err := dataToRecord(d, pinto)
@@ -296,7 +296,7 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	pctx := ctx
 	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	log.Printf("[INFO] Pinto: Updating record with id %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
@@ -320,14 +320,14 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	pinto := m.(*PintoProvider)
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	in := strings.Split(d.Id(), "/")
 	if len(in) != 5 {
 		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{provider}\"")
-	}
-
-	pctx := ctx
-	if pinto.apiKey != "" {
-		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
 	// setting all information in a record var to perform the id calculation below
