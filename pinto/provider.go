@@ -113,7 +113,7 @@ func Provider(client *gopinto.APIClient) *schema.Provider {
 					environment:    "",
 				}, nil
 			}
-			return providerConfigure(data)
+			return providerConfigure(ctx, data)
 		},
 	}
 }
@@ -155,8 +155,7 @@ func configureOAuthClient(d *schema.ResourceData) (cc.Config, error) {
 
 	return oauthConfig, nil
 }
-
-func providerConfigure(d *schema.ResourceData) (*PintoProvider, diag.Diagnostics) {
+func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
