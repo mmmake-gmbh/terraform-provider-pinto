@@ -111,7 +111,7 @@ func createRecord(client *gopinto.APIClient, ctx context.Context, record Record)
 	crr.SetClass(gopinto.RecordClass(record.Class))
 	crr.SetTtl(int32(*record.Ttl))
 	_, resp, gErr := client.RecordsApi.ApiDnsRecordsPost(ctx).CreateRecordRequestModel(*crr).Execute()
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("RECORD CREATE", gErr.Error(), resp))
 	}
 	return nil
