@@ -71,6 +71,11 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	environment := getEnvironment(pinto, d)
 	provider, err := getProvider(pinto, d)
 	zone := d.Get("zone").(string)
@@ -83,7 +88,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(ctx).
+	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).
 		Provider(provider).
 		Zone(zone).
 		Name(name).
@@ -93,7 +98,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	r, resp, gErr := request.Execute()
 
-	if gErr.Error() != "" || resp.StatusCode >= 400 {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] RECORD READ", gErr.Error(), resp))
 	}
 	if len(r) > 1 {

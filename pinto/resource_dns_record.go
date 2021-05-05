@@ -122,6 +122,10 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
 
 	record, err := dataToRecord(d, pinto)
 	if err != nil {
@@ -134,7 +138,7 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		ttl64 := int64(3600)
 		record.Ttl = &ttl64
 	}
-	err = createRecord(pinto.client, ctx, record)
+	err = createRecord(pinto.client, pctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -218,12 +222,17 @@ func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	record, err := dataToRecord(d, pinto)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	record.id = d.Id()
-	err = deleteRecord(pinto.client, ctx, record)
+	err = deleteRecord(pinto.client, pctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -285,17 +294,22 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	log.Printf("[INFO] Pinto: Updating record with id %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of Records at the moment; instead we have to delete and create the Record
 	oldRecord, newRecord, err := buildRecordsFromChange(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = deleteRecord(pinto.client, ctx, oldRecord)
+	err = deleteRecord(pinto.client, pctx, oldRecord)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createRecord(pinto.client, ctx, newRecord)
+	err = createRecord(pinto.client, pctx, newRecord)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -108,7 +108,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 
 	rrecords, resp, err := request.Execute()
 
-	if err.Error() != "" || resp.StatusCode >= 400 {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] RECORD READ", err.Error(), resp))
 	}
 

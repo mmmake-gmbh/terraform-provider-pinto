@@ -100,6 +100,11 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	zone := d.Get("name").(string)
 	environment := getEnvironment(pinto, d)
 	provider, err := getProvider(pinto, d)
@@ -108,7 +113,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, provider, environment)
 
-	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(ctx, zone).Provider(provider)
+	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(provider)
 	if environment != "" {
 		request = request.Environment(environment)
 	}
@@ -142,11 +147,16 @@ func resourceDnsZoneDelete(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = deleteZone(pinto.client, ctx, zone)
+	err = deleteZone(pinto.client, pctx, zone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -159,6 +169,11 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 
+	pctx := ctx
+	if pinto.apiKey != "" {
+		pctx = context.WithValue(ctx, gopinto.ContextAPIKeys, pinto.apiKey)
+	}
+
 	log.Printf("[INFO] Pinto: Updating zone %s in environment %s of provider %s", d.Id(), pinto.environment, pinto.provider)
 	//TODO: pinto api does not support an update of zones at the moment; instead we have to delete and create the zone
 	oldZone, err := createZoneFromData(pinto, d)
@@ -169,11 +184,11 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	oldZoneS, newZoneS := d.GetChange("name")
 	oldZone.name = oldZoneS.(string)
 	newZone.name = newZoneS.(string)
-	err = deleteZone(pinto.client, ctx, oldZone)
+	err = deleteZone(pinto.client, pctx, oldZone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createZone(pinto.client, ctx, newZone)
+	err = createZone(pinto.client, pctx, newZone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
