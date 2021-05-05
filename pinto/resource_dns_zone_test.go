@@ -29,8 +29,7 @@ func TestProviderPintoDnsCreateZoneResource(t *testing.T) {
 }
 
 func TestProviderPintoDnsChangeZoneResource(t *testing.T) {
-	name := "test_zone"
-	provider := "digitalocean"
+	name := "env0.co."
 	resource.Test(
 		t,
 		resource.TestCase{
@@ -38,16 +37,16 @@ func TestProviderPintoDnsChangeZoneResource(t *testing.T) {
 			ProviderFactories: selectProviderConfiguration(changeRequest),
 			Steps: []resource.TestStep{
 				resource.TestStep{
-					Config: testAccConfigDNSZone(provider, name),
+					Config: testAccConfigDNSZoneChange(name, name),
 					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("pinto_dns_zone.test_zone", "name", name+"."),
+						resource.TestCheckResourceAttr("pinto_dns_zone.env0", "name", name),
 					),
 					ExpectNonEmptyPlan: true,
 				},
 				resource.TestStep{
-					Config: testAccConfigDNSZone(provider, name),
+					Config: testAccConfigDNSZoneChange(name, "env1.co."),
 					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("pinto_dns_zone.test_zone", "name", name+"."),
+						resource.TestCheckResourceAttr("pinto_dns_zone.env0", "name", "env1.co."),
 					),
 					ExpectNonEmptyPlan: true,
 				},
@@ -87,8 +86,32 @@ func TestProviderPintoDnsImportZones(t *testing.T) {
 func testAccConfigDNSZone(provider, name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_zone" "%s" {
-  pinto_provider    = "%s"
-  pinto_environment = "%s"
-  name              = "%s."
-}`, name, provider, "prod1", name)
+  	pinto_provider    = "%s"
+  	pinto_environment = "%s"
+  	name              = "%s."
+}`,
+	name,
+	provider,
+	"prod1",
+	name,
+	)
+}
+func testAccConfigDNSZoneChange(oldName string, newName string) string {
+	return fmt.Sprintf(`
+data "pinto_dns_zone" "env0" {
+  pinto_provider    = "digitalocean"
+  pinto_environment = "prod1"
+  name              = "%s"
+}
+
+data "pinto_dns_zones" "zones" {
+	pinto_provider    = "digitalocean"
+	pinto_environment = "prod1"
+}
+
+resource "pinto_dns_zone" "env0" {
+  	pinto_provider    = "digitalocean"
+  	pinto_environment = "prod1"
+  	name              = "%s"
+}`, oldName, newName)
 }

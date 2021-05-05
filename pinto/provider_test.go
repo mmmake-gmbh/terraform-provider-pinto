@@ -196,75 +196,6 @@ func TestProviderUnknownAttributes(t *testing.T) {
 	)
 }
 
-// used to reflect the example described in the  examples/main.tf file
-var providerExampleSteps = []resource.TestStep{
-	resource.TestStep{
-		Config: `
-data "pinto_dns_zone" "zone1" {
-  pinto_provider    = "digitalocean"
-  pinto_environment = "prod1"
-  name              = "env0.co."
-}
-
-data "pinto_dns_zones" "zones" {
-	pinto_provider    = "digitalocean"
-	pinto_environment = "prod1"
-}
-
-data "pinto_dns_record" "record" {
-  pinto_provider    = "digitalocean"
-  pinto_environment = "prod1"
-  zone              = "env0.co."
-  name              = "pinto"
-  type              = "A"
-}
-
-data "pinto_dns_records" "records" {
-	pinto_provider    = "digitalocean"
-	pinto_environment = "prod1"
-  	zone              = "env0.co."
-}`,
-	},
-	resource.TestStep{
-		ResourceName: "env0.co.prod1.digitalocean.",
-		Config: `
-resource "pinto_dns_zone" "env0" {
-  	pinto_environment = "prod1"
-  	pinto_provider    = "digitalocean"
-	name = "env0.co."
-}
-			`,
-		Destroy: true,
-	},
-	resource.TestStep{
-		Config: `
-resource "pinto_dns_record" "env0" {
-  pinto_provider    = "digitalocean"
-  pinto_environment = "prod1"
-  zone              = "env0.co."
-  name              = "somewhere"
-  type              = "TXT"
-  class             = "IN"
-  data              = "127.0.0.1"
-  ttl               = 1800
-}
-			`,
-		Destroy: true,
-	},
-}
-
-// run the steps described above, which do the same like running tf commands within the example folder
-func TestProviderDefaultExampleSteps(t *testing.T) {
-	resource.Test(
-		t,
-		resource.TestCase{
-			IsUnitTest:        false,
-			ProviderFactories: selectProviderConfiguration(defaultMock),
-			Steps:             providerExampleSteps,
-		},
-	)
-}
-
 type service struct {
 	client *mockClient
 }
@@ -306,6 +237,7 @@ func (m mockRecordsCreateApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDn
 	return gopinto.Record{
 		Name:  "record",
 		Type:  "A",
+		Ttl:   toInt64(1800),
 		Class: "IN",
 		Data:  "127.0.0.1",
 	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
@@ -330,7 +262,7 @@ func (m mockZonesCreateApiService) ApiDnsZonesPost(ctx context.Context) gopinto.
 }
 func (m mockZonesCreateApiService) ApiDnsZonesPostExecute(r gopinto.ApiApiDnsZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
 	return gopinto.Zone{
-			Name: "env0-changed.co.",
+			Name: "env0.co.",
 		}, &http.Response{
 			StatusCode: 200,
 		}, gopinto.GenericOpenAPIError{}
@@ -352,7 +284,7 @@ func (m mockZonesCreateApiService) ApiDnsZonesZoneGet(ctx context.Context, zone 
 }
 func (m mockZonesCreateApiService) ApiDnsZonesZoneGetExecute(r gopinto.ApiApiDnsZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
 	return gopinto.Zone{
-			Name: "env0-changed.co.",
+			Name: "env0.co.",
 		}, &http.Response{
 			StatusCode: 200,
 		}, gopinto.GenericOpenAPIError{}
@@ -522,11 +454,10 @@ func (m mockRecordsChangeApiService) ApiDnsRecordsGet(ctx context.Context) gopin
 func (m mockRecordsChangeApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDnsRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
 	return []gopinto.Record{
 			{
-				Name:  "pinto",
+				Name:  "record",
 				Type:  "A",
 				Class: "IN",
 				Ttl:   toInt64(1800),
-				Data:  "127.0.0.1",
 			},
 		}, &http.Response{
 			StatusCode: 200,
@@ -568,7 +499,7 @@ func (m mockRecordsApiService) ApiDnsRecordsGet(ctx context.Context) gopinto.Api
 func (m mockRecordsApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDnsRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
 	return []gopinto.Record{
 		{
-			Name:  "pinto",
+			Name:  "record",
 			Type:  "A",
 			Class: "IN",
 			Ttl:   toInt64(1800),

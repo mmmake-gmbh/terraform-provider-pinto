@@ -9,6 +9,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+func TestProviderPintoDnsRecords(t *testing.T) {
+	name := "record"
+	resource.Test(
+		t,
+		resource.TestCase{
+			IsUnitTest:        false,
+			ProviderFactories: selectProviderConfiguration(defaultMock),
+			Steps: []resource.TestStep{
+				resource.TestStep{
+					Config: testAccConfigResourceDNSRecord(name),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("pinto_dns_record.env0", "name", name),
+					),
+				},
+			},
+		},
+	)
+}
+
 func TestProviderPintoDnsCreateRecordResources(t *testing.T) {
 	name := "record"
 	resource.Test(
@@ -36,25 +55,6 @@ func TestProviderPintoDnsCreateRecordResources(t *testing.T) {
 	)
 }
 
-func TestProviderPintoDnsRecords(t *testing.T) {
-	name := "record"
-	resource.Test(
-		t,
-		resource.TestCase{
-			IsUnitTest:        false,
-			ProviderFactories: selectProviderConfiguration(defaultMock),
-			Steps: []resource.TestStep{
-				resource.TestStep{
-					Config: testAccConfigResourceDNSRecord(name),
-					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("pinto_dns_record.env0", "name", name),
-					),
-				},
-			},
-		},
-	)
-}
-
 func TestProviderPintoDnsChangeRecordResources(t *testing.T) {
 	name := "record"
 	resource.Test(
@@ -66,48 +66,15 @@ func TestProviderPintoDnsChangeRecordResources(t *testing.T) {
 				resource.TestStep{
 					Config: testAccConfigResourceDNSRecord(name),
 					Check: resource.ComposeTestCheckFunc(
-						func(state *terraform.State) error {
-							return nil
-						},
-						resource.TestCheckResourceAttr("pinto_dns_record.env0", "name", name),
+						resource.TestCheckResourceAttr("pinto_dns_record.env0", "data", "127.0.0.1"),
 					),
 				},
 				resource.TestStep{
-					Config: testAccConfigResourceDNSRecordWithoutTtl(name),
+					Config: testAccConfigResourceChangeRecord(name + "_changed"),
 					Check: resource.ComposeTestCheckFunc(
-						resource.TestCheckResourceAttr("pinto_dns_record.env0", "name", name),
-					),
-					ExpectNonEmptyPlan: true,
-				},
-			},
-		},
-	)
-}
-
-func TestProviderPintoDnsChangeDebug(t *testing.T) {
-	name := "record"
-	resource.Test(
-		t,
-		resource.TestCase{
-			IsUnitTest:        false,
-			ProviderFactories: selectProviderConfiguration(changeRequest),
-			Steps: []resource.TestStep{
-				resource.TestStep{
-					Config: testAccConfigResourceDNSRecord(name),
-					Check: resource.ComposeTestCheckFunc(
-						func(state *terraform.State) error {
-							return nil
-						},
-						resource.TestCheckResourceAttr("pinto_dns_record.env0", "name", name),
-					),
-				},
-				resource.TestStep{
-					Config: testAccConfigResourceDNSRecordChanged(name),
-					Check: resource.ComposeTestCheckFunc(
-						func(state *terraform.State) error {
-							return nil
-						},
-						resource.TestCheckResourceAttr("pinto_dns_record.env0", "name", name),
+						resource.TestCheckResourceAttr("pinto_dns_record.env0", "data", "172.0.0.1"),
+						resource.TestCheckResourceAttr("pinto_dns_record.env0", "class", "FOO"),
+						resource.TestCheckResourceAttr("pinto_dns_record.env0", "ttl", "3600"),
 					),
 					ExpectNonEmptyPlan: true,
 				},
@@ -136,6 +103,7 @@ func TestProviderPintoDnsImportRecord(t *testing.T) {
 					),
 				},
 				resource.TestStep{
+					// TODO: Clarify the resource name
 					ResourceName:      `pinto_dns_record.env0`,
 					ImportState:       true,
 					ImportStateVerify: true,
@@ -149,14 +117,14 @@ func TestProviderPintoDnsImportRecord(t *testing.T) {
 func testAccConfigResourceDNSRecord(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_record" "env0" {
-  pinto_provider    = "digitalocean"
-  pinto_environment = "prod1"
-  zone              = "env0.co."
-  name              = "%s"
-  type              = "TXT"
-  class             = "IN"
-  data              = "127.0.0.1"
-  ttl               = 1800
+	pinto_provider    = "digitalocean"
+	pinto_environment = "prod1"
+	zone              = "env0.co."
+	name              = "%s"
+	type              = "TXT"
+	class             = "IN"
+	data              = "127.0.0.1"
+	ttl               = 1800
 }
 `, name)
 }
@@ -165,40 +133,57 @@ resource "pinto_dns_record" "env0" {
 func testAccConfigResourceMissingClass(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_record" "env0" {
-  pinto_provider    = "digitalocean"
-  pinto_environment = "prod1"
-  zone              = "env1.co."
-  name              = "%s"
-  type              = "A"
-  data              = "172.0.0.1"
+	pinto_provider    = "digitalocean"
+	pinto_environment = "prod1"
+	zone              = "env1.co."
+	name              = "%s"
+	class             = "IN"
+	type              = "A"
+	data              = "127.0.0.1"
 }
 `, name)
 }
 
-func testAccConfigResourceDNSRecordChanged(name string) string {
+func testAccConfigResourceChangeRecord(name string) string {
 	return fmt.Sprintf(`
+data "pinto_dns_record" "%s" {
+	pinto_provider    = "digitalocean"
+	pinto_environment = "prod1"
+	zone              = "env0.co."
+	name              = "record"
+	type              = "A"
+}
+
+data "pinto_dns_records" "records" {
+	pinto_provider    = "digitalocean"
+	pinto_environment = "prod1"
+  	zone              = "env0.co."
+}
+
 resource "pinto_dns_record" "env0" {
-  pinto_provider    = "digitalocean"
-  pinto_environment = "prod1"
-  zone              = "env1.co."
-  name              = "%s"
-  type              = "A"
-  class             = "IN"
-  data              = "172.0.0.1"
+	pinto_provider    = "digitalocean"
+	pinto_environment = "prod1"
+	zone              = "env1.co."
+	name              = "%s"
+	class             = "FOO"
+	type              = "BAR"
+	data              = "172.0.0.1"
+  	ttl               = 3600
 }
-`, name)
+`, name, name)
 }
+
 
 func testAccConfigResourceDNSRecordWithoutTtl(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_record" "env0" {
-  pinto_provider    = "digitalocean"
-  pinto_environment = "prod1"
-  zone              = "env0.co."
-  name              = "%s"
-  type              = "TXT"
-  class             = "IN"
-  data              = "127.0.0.1"
+  	pinto_provider    = "digitalocean"
+  	pinto_environment = "prod1"
+  	zone              = "env0.co."
+  	name              = "%s"
+  	type              = "TXT"
+  	class             = "IN"
+  	data              = "127.0.0.1"
 }
 `, name)
 }
