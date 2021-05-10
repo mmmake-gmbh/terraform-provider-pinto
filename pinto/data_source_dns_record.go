@@ -134,7 +134,6 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	return diags
 
 	return diags
 }
