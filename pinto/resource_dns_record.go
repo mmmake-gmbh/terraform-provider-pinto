@@ -5,11 +5,12 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/gopinto"
-	"log"
-	"strings"
 )
 
 func resourceDnsRecord() *schema.Resource {
@@ -44,7 +45,8 @@ func resourceDnsRecord() *schema.Resource {
 			},
 			"class": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "IN",
 			},
 			"ttl": {
 				Type:     schema.TypeInt,
@@ -95,7 +97,7 @@ func dataToRecord(d *schema.ResourceData, provider *PintoProvider) (Record, erro
 	record.Class = d.Get("class").(string)
 	_, ok := d.GetOk("ttl")
 	if ok {
-		ttl := int64(d.Get("ttl").(int))
+		ttl := int32(d.Get("ttl").(int))
 		record.Ttl = &ttl
 	}
 	return record, nil
@@ -135,8 +137,8 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	log.Printf("[INFO] Pinto: Creating record %s in environment %s of provider %s", record.id, pinto.environment, pinto.provider)
 	if !record.HasTtl() {
 		// if no TTL is set, then we use the default value 3600
-		ttl64 := int64(3600)
-		record.Ttl = &ttl64
+		ttl32 := int32(3600)
+		record.Ttl = &ttl32
 	}
 	err = createRecord(pinto.client, pctx, record)
 	if err != nil {
@@ -275,10 +277,10 @@ func buildRecordsFromChange(p *PintoProvider, d *schema.ResourceData) (Record, R
 	}
 	if d.HasChange("ttl") {
 		o, n := d.GetChange("ttl")
-		o64 := int64(o.(int))
-		n64 := int64(n.(int))
-		oldRecord.Ttl = &o64
-		newRecord.Ttl = &n64
+		o32 := int32(o.(int))
+		n32 := int32(n.(int))
+		oldRecord.Ttl = &o32
+		newRecord.Ttl = &n32
 	}
 	if d.HasChange("data") {
 		o, n := d.GetChange("data")

@@ -95,8 +95,8 @@ func TestProviderPintoDnsImportRecord(t *testing.T) {
 					Config: testAccConfigResourceDNSRecord(name),
 					Check: resource.ComposeTestCheckFunc(
 						func(state *terraform.State) error {
-							sr := state.RootModule().String()
-							fmt.Sprintf("%s", sr)
+							// sr := state.RootModule().String()
+							// fmt.Sprintf("%s", sr)
 							return nil
 						},
 						resource.TestCheckResourceAttr("pinto_dns_record.env0", "name", name),
@@ -129,7 +129,6 @@ resource "pinto_dns_record" "env0" {
 `, name)
 }
 
-// TODO: The class is required but it shouldn't be according to the spec
 func testAccConfigResourceMissingClass(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_record" "env0" {
@@ -137,7 +136,6 @@ resource "pinto_dns_record" "env0" {
 	pinto_environment = "prod1"
 	zone              = "env1.co."
 	name              = "%s"
-	class             = "IN"
 	type              = "A"
 	data              = "127.0.0.1"
 }
@@ -172,7 +170,6 @@ resource "pinto_dns_record" "env0" {
 }
 `, name, name)
 }
-
 
 func testAccConfigResourceDNSRecordWithoutTtl(name string) string {
 	return fmt.Sprintf(`
