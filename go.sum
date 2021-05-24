@@ -401,6 +401,8 @@ gitlab.com/whizus/gopinto v0.0.0-20210409085238-87b8e356b8be h1:EIB9qgMGsoMR1mlR
 gitlab.com/whizus/gopinto v0.0.0-20210409085238-87b8e356b8be/go.mod h1:BzFiSndk5k3FcFsJNHoTaBNPTAgWe8taxiPL3iwkQUw=
 gitlab.com/whizus/gopinto v0.0.0-20210520145708-090ada1acc63 h1:hALwVf41Wh5Jk8OP5+tZ2VQY8ifisuNO0U4gt/nvcRQ=
 gitlab.com/whizus/gopinto v0.0.0-20210520145708-090ada1acc63/go.mod h1:7YMtly2p7zmqA0aoD9DJidM14hsXVSrjxke78uakSyQ=
+gitlab.com/whizus/gopinto v0.0.0-20210524142954-cc31d78f0051 h1:A7ydKNGk6yLR0CRJjaqX0zsFSeNAhy+Ch18l3g+ckN8=
+gitlab.com/whizus/gopinto v0.0.0-20210524142954-cc31d78f0051/go.mod h1:w88C2BKq0saiekYyrJLONFxAxoSweC6aSk09z9toxpM=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0 h1:C9hSCOW830chIVkdja34wa6Ky+IzWllkUinR+BtRZd4=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=

@@ -237,7 +237,7 @@ func (m mockRecordsCreateApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDn
 	return gopinto.Record{
 		Name:  "record",
 		Type:  "A",
-		Ttl:   toInt64(1800),
+		Ttl:   toInt32(1800),
 		Class: "IN",
 		Data:  "127.0.0.1",
 	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
@@ -324,7 +324,7 @@ func (m mockRecordsBadApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDnsRe
 		Name:  "record",
 		Type:  "A",
 		Class: "IN",
-		Ttl:   toInt64(1800),
+		Ttl:   toInt32(1800),
 		Data:  "127.0.0.1",
 	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
 }
@@ -457,7 +457,7 @@ func (m mockRecordsChangeApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDns
 				Name:  "record",
 				Type:  "A",
 				Class: "IN",
-				Ttl:   toInt64(1800),
+				Ttl:   toInt32(1800),
 			},
 		}, &http.Response{
 			StatusCode: 200,
@@ -473,7 +473,7 @@ func (m mockRecordsChangeApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDn
 		Name:  "record",
 		Type:  "A",
 		Class: "IN",
-		Ttl:   toInt64(1800),
+		Ttl:   toInt32(1800),
 		Data:  "127.0.0.1",
 	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
 }
@@ -502,7 +502,7 @@ func (m mockRecordsApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDnsRecord
 			Name:  "record",
 			Type:  "A",
 			Class: "IN",
-			Ttl:   toInt64(1800),
+			Ttl:   toInt32(1800),
 			Data:  "127.0.0.1",
 		},
 	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
@@ -518,7 +518,7 @@ func (m mockRecordsApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDnsRecor
 		Name:  "pinto",
 		Type:  "A",
 		Class: "IN",
-		Ttl:   toInt64(1800),
+		Ttl:   toInt32(1800),
 		Data:  "127.0.0.1",
 	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
 }
@@ -572,6 +572,6 @@ func (m mockZonesApiService) ApiDnsZonesZoneGetExecute(r gopinto.ApiApiDnsZonesZ
 	return zone, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
 }
 
-func toInt64(x int64) *int64 {
+func toInt32(x int32) *int32 {
 	return &x
 }
