@@ -1,13 +1,14 @@
-package provider
+package pinto
 
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/gopinto"
-	"log"
-	"strings"
 )
 
 func resourceDnsZone() *schema.Resource {
@@ -70,7 +71,7 @@ func createZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error
 		Name:        zone.name,
 	})
 	_, resp, gErr := request.Execute()
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400{
 		return fmt.Errorf(handleClientError("ZONE CREATE", gErr.Error(), resp))
 	}
 	return nil
@@ -85,6 +86,7 @@ func resourceDnsZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if pinto.apiKey != "" {
 		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
+
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -121,7 +123,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 		request = request.Environment(environment)
 	}
 	z, resp, gErr := request.Execute()
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("ZONE READ", gErr.Error(), resp))
 	}
 	e := d.Set("name", z.Name)
@@ -139,7 +141,7 @@ func deleteZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error
 		request = request.Environment(zone.environment)
 	}
 	resp, err := request.Execute()
-	if err.Error() != "" {
+	if  resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("ZONE DELETE", err.Error(), resp))
 	}
 	return nil
@@ -154,6 +156,7 @@ func resourceDnsZoneDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if pinto.apiKey != "" {
 		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
+
 	zone, err := createZoneFromData(pinto, d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -186,11 +189,11 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	oldZoneS, newZoneS := d.GetChange("name")
 	oldZone.name = oldZoneS.(string)
 	newZone.name = newZoneS.(string)
-	err = deleteZone(pinto.client, ctx, oldZone)
+	err = deleteZone(pinto.client, pctx, oldZone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createZone(pinto.client, ctx, newZone)
+	err = createZone(pinto.client, pctx, newZone)
 	if err != nil {
 		return diag.FromErr(err)
 	}

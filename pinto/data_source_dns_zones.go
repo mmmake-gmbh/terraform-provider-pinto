@@ -1,4 +1,4 @@
-package provider
+package pinto
 
 import (
 	"context"
@@ -67,7 +67,7 @@ func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m inter
 		request = request.Environment(environment)
 	}
 	rz, resp, err := request.Execute()
-	if err.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] ZONES READ", err.Error(), resp))
 	}
 

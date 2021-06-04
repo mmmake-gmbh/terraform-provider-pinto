@@ -1,15 +1,16 @@
-package provider
+package pinto
 
 import (
 	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/gopinto"
-	"log"
-	"strings"
 )
 
 func resourceDnsRecord() *schema.Resource {
@@ -44,7 +45,8 @@ func resourceDnsRecord() *schema.Resource {
 			},
 			"class": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "IN",
 			},
 			"ttl": {
 				Type:     schema.TypeInt,
@@ -95,7 +97,7 @@ func dataToRecord(d *schema.ResourceData, provider *PintoProvider) (Record, erro
 	record.Class = d.Get("class").(string)
 	_, ok := d.GetOk("ttl")
 	if ok {
-		ttl := int64(d.Get("ttl").(int))
+		ttl := int32(d.Get("ttl").(int))
 		record.Ttl = &ttl
 	}
 	return record, nil
@@ -111,7 +113,7 @@ func createRecord(client *gopinto.APIClient, ctx context.Context, record Record)
 	crr.SetClass(gopinto.RecordClass(record.Class))
 	crr.SetTtl(int32(*record.Ttl))
 	_, resp, gErr := client.RecordsApi.ApiDnsRecordsPost(ctx).CreateRecordRequestModel(*crr).Execute()
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("RECORD CREATE", gErr.Error(), resp))
 	}
 	return nil
@@ -135,8 +137,8 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	log.Printf("[INFO] Pinto: Creating record %s in environment %s of provider %s", record.id, pinto.environment, pinto.provider)
 	if !record.HasTtl() {
 		// if no TTL is set, then we use the default value 3600
-		ttl64 := int64(3600)
-		record.Ttl = &ttl64
+		ttl32 := int32(3600)
+		record.Ttl = &ttl32
 	}
 	err = createRecord(pinto.client, pctx, record)
 	if err != nil {
@@ -176,7 +178,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	r, resp, gErr := request.Execute()
 
-	if gErr.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("RECORD READ", gErr.Error(), resp))
 	}
 	record.id = computeRecordId(record)
@@ -196,7 +198,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 
 func deleteRecord(client *gopinto.APIClient, ctx context.Context, record Record) error {
 	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of provider %s", record.id, record.environment, record.provider)
-	log.Printf("[DEBUG] Pinto: Working in env %s of provider %s", record.environment, record.provider)
+	log.Printf("[DEBUG] Pinto: Working in env %s of pinto %s", record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Deleting Record:")
 	printDebugRecord(record)
 	rBody := make(map[string]string)
@@ -226,6 +228,7 @@ func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 	if pinto.apiKey != "" {
 		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
+
 	record, err := dataToRecord(d, pinto)
 	if err != nil {
 		return diag.FromErr(err)
@@ -274,10 +277,10 @@ func buildRecordsFromChange(p *PintoProvider, d *schema.ResourceData) (Record, R
 	}
 	if d.HasChange("ttl") {
 		o, n := d.GetChange("ttl")
-		o64 := int64(o.(int))
-		n64 := int64(n.(int))
-		oldRecord.Ttl = &o64
-		newRecord.Ttl = &n64
+		o32 := int32(o.(int))
+		n32 := int32(n.(int))
+		oldRecord.Ttl = &o32
+		newRecord.Ttl = &n32
 	}
 	if d.HasChange("data") {
 		o, n := d.GetChange("data")
@@ -328,6 +331,7 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	if len(in) != 5 {
 		return nil, fmt.Errorf("invalid Import. ID has to be of format \"{type}/{name}/{zone}/{environment}/{provider}\"")
 	}
+
 	// setting all information in a record var to perform the id calculation below
 	var record Record
 	record.Type = gopinto.RecordType(in[0])

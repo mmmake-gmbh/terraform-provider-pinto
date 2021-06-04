@@ -1,4 +1,4 @@
-package provider
+package pinto
 
 import (
 	"context"
@@ -40,8 +40,12 @@ const (
 	envKeyClientScope  = "PINTO_CLIENT_SCOPE"
 )
 
+func NewDefaultProvider() *schema.Provider {
+	return Provider(nil)
+}
+
 // Provider -
-func Provider() *schema.Provider {
+func Provider(client *gopinto.APIClient) *schema.Provider {
 	log.Printf("[DEBUG] Pinto: Starting Provider")
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
@@ -98,7 +102,19 @@ func Provider() *schema.Provider {
 			"pinto_dns_record":  dataSourceDnsRecord(),
 			"pinto_dns_records": dataSourceDnsRecords(),
 		},
-		ConfigureContextFunc: providerConfigure,
+		ConfigureContextFunc: func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
+			// override the provider client e.g. with a mock client used during tests and disable diagnostics
+			if client != nil {
+				return &PintoProvider{
+					IPintoProvider: nil,
+					client:         client,
+					apiKey:         "",
+					provider:       "",
+					environment:    "",
+				}, nil
+			}
+			return providerConfigure(ctx, data)
+		},
 	}
 }
 
@@ -139,8 +155,7 @@ func configureOAuthClient(d *schema.ResourceData) (cc.Config, error) {
 
 	return oauthConfig, nil
 }
-
-func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	// Warning or errors can be collected in a slice type
 	var diags diag.Diagnostics
 

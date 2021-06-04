@@ -1,11 +1,12 @@
-package provider
+package pinto
 
 import (
 	"context"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/gopinto"
-	"log"
 )
 
 func dataSourceDnsRecord() *schema.Resource {
@@ -80,6 +81,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	zone := d.Get("zone").(string)
 	name := d.Get("name").(string)
 	_type := d.Get("type").(string)
+
 	log.Printf("[INFO] Pinto: Read record for name=%s, zone=%s, type=%s, provider=%s, environment=%s",
 		name, zone, _type, provider, environment)
 
@@ -95,7 +97,8 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 		request = request.Environment(environment)
 	}
 	r, resp, gErr := request.Execute()
-	if gErr.Error() != "" {
+
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] RECORD READ", gErr.Error(), resp))
 	}
 	if len(r) > 1 {
@@ -105,6 +108,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	record := recordToRecord(r[0], zone, environment, provider)
 	record.id = computeRecordId(record)
+
 	d.SetId(record.id)
 	err = d.Set("name", record.Name)
 	if err != nil {

@@ -1,11 +1,12 @@
-package provider
+package pinto
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"gitlab.com/whizus/gopinto"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceDnsZone() *schema.Resource {
@@ -53,7 +54,7 @@ func dataSourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 		request = request.Environment(zone.environment)
 	}
 	_, resp, err := request.Execute()
-	if err.Error() != "" {
+	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] ZONE READ", err.Error(), resp))
 	}
 	d.SetId(computeZoneId(zone))

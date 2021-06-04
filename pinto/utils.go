@@ -1,11 +1,12 @@
-package provider
+package pinto
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -21,7 +22,6 @@ func handleClientError(op string, errorString string, httpResponse *http.Respons
 	if err == nil {
 		bodyString = string(bodyBytes)
 		log.Printf("[ERROR] Unable to perform operation %s. \n Reason: %s \n Details: %s", op, errorString, bodyString)
-
 		return errorString + ": " + bodyString
 	} else {
 		log.Printf("[ERROR] Unable to perform operation %s. \n Reason: %s", op, errorString)

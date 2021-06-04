@@ -7,7 +7,21 @@ A custom provider for Terraform that allows the creation of resources through th
 Run the following command to build the provider
 
 ```shell
-$ go build -o terraform-provider-provider
+$ go build -o terraform-provider-pinto
+```
+
+## Run unit and acceptance tests
+
+Run the following command to run the providers unit tests
+
+```shell
+$ make test
+```
+
+To also run the acceptance tests, run
+
+```shell
+$ make testacc
 ```
 
 ## Test sample configuration
