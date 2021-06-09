@@ -1,13 +1,13 @@
-# Terraform Provider Pinto
+# Terraform Provider Project Pinto
 
-A custom provider for Terraform that allows the creation of resources through the Pinto API.
+A custom provider for Terraform that allows the creation of resources through the Project Pinto API.
 
 ## Build provider
 
 Run the following command to build the provider
 
 ```shell
-$ go build -o terraform-provider-pinto
+$ go build -o terraform-provider-project-pinto
 ```
 
 ## Run unit and acceptance tests

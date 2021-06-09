@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     pinto = {
-      source = "terraform.local/whizus/pinto"
+      source = "terraform.local/camaoag/terraform-provider-project-pinto"
     }
   }
 }
@@ -9,8 +9,8 @@ terraform {
 provider "pinto" {
   base_url       = "https://pinto.irgendwo.co"
   token_url      = "https://auth.pinto.irgendwo.co/connect/token"
-  client_id      = "machineclient"
-  client_secret  = "Secret123$"
+  client_id      = "client_id"
+  client_secret  = "super_secret"
   client_scope   = "openapigateway,nexus"
   pinto_provider = "digitalocean"
   //pinto_environment = "prod1"
