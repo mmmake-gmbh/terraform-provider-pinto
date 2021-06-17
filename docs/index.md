@@ -1,13 +1,13 @@
 ---
-page_title: "Pinto Provider"
+page_title: "Project Pinto Provider"
 subcategory: ""
 description: |-
   Terraform provider for interacting with Pinto API.
 ---
 
-# Pinto Provider
+# Project Pinto Provider
 
-The Pinto Provider can be used to interact with [Pinto](https://pinto.irgendwo.co/api/dns/swagger/index.html).
+The Project Pinto Provider can be used to interact with [Pinto](https://pinto.irgendwo.co/api/dns/swagger/index.html).
 
 ## Example Usage
 

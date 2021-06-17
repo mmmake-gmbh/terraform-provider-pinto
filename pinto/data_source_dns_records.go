@@ -2,9 +2,9 @@ package pinto
 
 import (
 	"context"
+	"github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.com/whizus/gopinto"
 	"log"
 	"strings"
 )
