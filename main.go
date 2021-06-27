@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/camaoag/terraform-provider-project-pinto/pinto"
+	"github.com/camaoag/terraform-provider-pinto/pinto"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 )

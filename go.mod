@@ -1,4 +1,4 @@
-module github.com/camaoag/terraform-provider-project-pinto
+module github.com/camaoag/terraform-provider-pinto
 
 go 1.13
 
