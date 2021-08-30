@@ -193,7 +193,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 			})
 			return nil, diags
 		}
-		//TODO: Do we need to move this into a utils class and use a different context each time?
+		// TODO: Do we need to move this into a utils class and use a different context each time?
 		clientConf.HTTPClient = oAuthConf.Client(context.Background())
 
 	}
