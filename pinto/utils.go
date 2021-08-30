@@ -54,3 +54,14 @@ func getEnvironment(p *PintoProvider, d *schema.ResourceData) string {
 	}
 	return res
 }
+
+// TODO: Clarify missing struct in client
+type AccessOptions struct {
+	Provider      string `json:"provider"`
+	Environment   string `json:"environment"`
+	CredentialsId string `json:"credentials_id"`
+}
+type XApiOptions struct {
+	AccessOptions AccessOptions     `json:"access_options"`
+	Meta          map[string]string `json:"meta"`
+}
