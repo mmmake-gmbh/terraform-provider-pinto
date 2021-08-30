@@ -1,17 +1,15 @@
 package pinto
 
 import (
-	"bytes"
 	"context"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
 	"testing"
 
+	"github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/camaoag/project-pinto-sdk-go"
 
 	"github.com/stretchr/testify/require"
 )
@@ -82,6 +80,13 @@ var providerConfigurations = map[ClientMock]func() (*schema.Provider, error){
 
 		return provider, nil
 	},
+}
+
+func NewMockClient(recordsApi gopinto.RecordsApi, zonesApi gopinto.ZonesApi) *mockClient {
+	return &mockClient{
+		RecordsApi: recordsApi,
+		ZonesApi:   zonesApi,
+	}
 }
 
 // unit tests to validate that the provider implements the expected resources
@@ -204,374 +209,241 @@ type mockClient gopinto.APIClient
 
 // default api mocks returning 20x results
 type mockRecordsApiService service
+
+func (m mockRecordsApiService) DnsApiRecordsDelete(ctx context.Context) gopinto.ApiDnsApiRecordsDeleteRequest {
+	panic("implement me")
+}
+
+func (m mockRecordsApiService) DnsApiRecordsDeleteExecute(r gopinto.ApiDnsApiRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
+}
+
+func (m mockRecordsApiService) DnsApiRecordsGet(ctx context.Context) gopinto.ApiDnsApiRecordsGetRequest {
+	panic("implement me")
+}
+
+func (m mockRecordsApiService) DnsApiRecordsGetExecute(r gopinto.ApiDnsApiRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
+}
+
+func (m mockRecordsApiService) DnsApiRecordsPost(ctx context.Context) gopinto.ApiDnsApiRecordsPostRequest {
+	panic("implement me")
+}
+
+func (m mockRecordsApiService) DnsApiRecordsPostExecute(r gopinto.ApiDnsApiRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
+}
+
 type mockZonesApiService service
+
+func (m mockZonesApiService) DnsApiZonesDelete(ctx context.Context) gopinto.ApiDnsApiZonesDeleteRequest {
+	panic("implement me")
+}
+
+func (m mockZonesApiService) DnsApiZonesDeleteExecute(r gopinto.ApiDnsApiZonesDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
+}
+
+func (m mockZonesApiService) DnsApiZonesGet(ctx context.Context) gopinto.ApiDnsApiZonesGetRequest {
+	panic("implement me")
+}
+
+func (m mockZonesApiService) DnsApiZonesGetExecute(r gopinto.ApiDnsApiZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
+}
+
+func (m mockZonesApiService) DnsApiZonesPost(ctx context.Context) gopinto.ApiDnsApiZonesPostRequest {
+	panic("implement me")
+}
+
+func (m mockZonesApiService) DnsApiZonesPostExecute(r gopinto.ApiDnsApiZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
+}
+
+func (m mockZonesApiService) DnsApiZonesZoneGet(ctx context.Context, zone string) gopinto.ApiDnsApiZonesZoneGetRequest {
+	panic("implement me")
+}
+
+func (m mockZonesApiService) DnsApiZonesZoneGetExecute(r gopinto.ApiDnsApiZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
+}
 
 type mockRecordsCreateApiService service
 
-func (m mockRecordsCreateApiService) ApiDnsRecordsDelete(ctx context.Context) gopinto.ApiApiDnsRecordsDeleteRequest {
-	return gopinto.ApiApiDnsRecordsDeleteRequest{
-		ApiService: m,
-	}
+func (m mockRecordsCreateApiService) DnsApiRecordsDelete(ctx context.Context) gopinto.ApiDnsApiRecordsDeleteRequest {
+	panic("implement me")
 }
-func (m mockRecordsCreateApiService) ApiDnsRecordsDeleteExecute(r gopinto.ApiApiDnsRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{
-		StatusCode: 200,
-	}, gopinto.GenericOpenAPIError{}
+
+func (m mockRecordsCreateApiService) DnsApiRecordsDeleteExecute(r gopinto.ApiDnsApiRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockRecordsCreateApiService) ApiDnsRecordsGet(ctx context.Context) gopinto.ApiApiDnsRecordsGetRequest {
-	return gopinto.ApiApiDnsRecordsGetRequest{
-		ApiService: m,
-	}
+
+func (m mockRecordsCreateApiService) DnsApiRecordsGet(ctx context.Context) gopinto.ApiDnsApiRecordsGetRequest {
+	panic("implement me")
 }
-func (m mockRecordsCreateApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDnsRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Record{}, &http.Response{
-		StatusCode: 200,
-	}, gopinto.GenericOpenAPIError{}
+
+func (m mockRecordsCreateApiService) DnsApiRecordsGetExecute(r gopinto.ApiDnsApiRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockRecordsCreateApiService) ApiDnsRecordsPost(ctx context.Context) gopinto.ApiApiDnsRecordsPostRequest {
-	return gopinto.ApiApiDnsRecordsPostRequest{
-		ApiService: m,
-	}
+
+func (m mockRecordsCreateApiService) DnsApiRecordsPost(ctx context.Context) gopinto.ApiDnsApiRecordsPostRequest {
+	panic("implement me")
 }
-func (m mockRecordsCreateApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDnsRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Record{
-		Name:  "record",
-		Type:  "A",
-		Ttl:   toInt32(1800),
-		Class: "IN",
-		Data:  "127.0.0.1",
-	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
+
+func (m mockRecordsCreateApiService) DnsApiRecordsPostExecute(r gopinto.ApiDnsApiRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
 type mockZonesCreateApiService service
 
-func (m mockZonesCreateApiService) ApiDnsZonesGet(ctx context.Context) gopinto.ApiApiDnsZonesGetRequest {
-	return gopinto.ApiApiDnsZonesGetRequest{
-		ApiService: m,
-	}
+func (m mockZonesCreateApiService) DnsApiZonesDelete(ctx context.Context) gopinto.ApiDnsApiZonesDeleteRequest {
+	panic("implement me")
 }
-func (m mockZonesCreateApiService) ApiDnsZonesGetExecute(r gopinto.ApiApiDnsZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Zone{}, &http.Response{
-		StatusCode: 200,
-	}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesCreateApiService) DnsApiZonesDeleteExecute(r gopinto.ApiDnsApiZonesDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockZonesCreateApiService) ApiDnsZonesPost(ctx context.Context) gopinto.ApiApiDnsZonesPostRequest {
-	return gopinto.ApiApiDnsZonesPostRequest{
-		ApiService: m,
-	}
+
+func (m mockZonesCreateApiService) DnsApiZonesGet(ctx context.Context) gopinto.ApiDnsApiZonesGetRequest {
+	panic("implement me")
 }
-func (m mockZonesCreateApiService) ApiDnsZonesPostExecute(r gopinto.ApiApiDnsZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Zone{
-			Name: "env0.co.",
-		}, &http.Response{
-			StatusCode: 200,
-		}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesCreateApiService) DnsApiZonesGetExecute(r gopinto.ApiDnsApiZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockZonesCreateApiService) ApiDnsZonesZoneDelete(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneDeleteRequest {
-	return gopinto.ApiApiDnsZonesZoneDeleteRequest{
-		ApiService: m,
-	}
+
+func (m mockZonesCreateApiService) DnsApiZonesPost(ctx context.Context) gopinto.ApiDnsApiZonesPostRequest {
+	panic("implement me")
 }
-func (m mockZonesCreateApiService) ApiDnsZonesZoneDeleteExecute(r gopinto.ApiApiDnsZonesZoneDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{
-		StatusCode: 200,
-	}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesCreateApiService) DnsApiZonesPostExecute(r gopinto.ApiDnsApiZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockZonesCreateApiService) ApiDnsZonesZoneGet(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneGetRequest {
-	return gopinto.ApiApiDnsZonesZoneGetRequest{
-		ApiService: m,
-	}
+
+func (m mockZonesCreateApiService) DnsApiZonesZoneGet(ctx context.Context, zone string) gopinto.ApiDnsApiZonesZoneGetRequest {
+	panic("implement me")
 }
-func (m mockZonesCreateApiService) ApiDnsZonesZoneGetExecute(r gopinto.ApiApiDnsZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Zone{
-			Name: "env0.co.",
-		}, &http.Response{
-			StatusCode: 200,
-		}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesCreateApiService) DnsApiZonesZoneGetExecute(r gopinto.ApiDnsApiZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
 type mockRecordsBadApiService service
 
-func (m mockRecordsBadApiService) ApiDnsRecordsDelete(ctx context.Context) gopinto.ApiApiDnsRecordsDeleteRequest {
-	return gopinto.ApiApiDnsRecordsDeleteRequest{
-		ApiService: m,
-	}
+func (m mockRecordsBadApiService) DnsApiRecordsDelete(ctx context.Context) gopinto.ApiDnsApiRecordsDeleteRequest {
+	panic("implement me")
 }
-func (m mockRecordsBadApiService) ApiDnsRecordsDeleteExecute(r gopinto.ApiApiDnsRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{
-		StatusCode: 400,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("Error: 400 Bad Request")),
-	}, gopinto.GenericOpenAPIError{}
+
+func (m mockRecordsBadApiService) DnsApiRecordsDeleteExecute(r gopinto.ApiDnsApiRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockRecordsBadApiService) ApiDnsRecordsGet(ctx context.Context) gopinto.ApiApiDnsRecordsGetRequest {
-	return gopinto.ApiApiDnsRecordsGetRequest{
-		ApiService: m,
-	}
+
+func (m mockRecordsBadApiService) DnsApiRecordsGet(ctx context.Context) gopinto.ApiDnsApiRecordsGetRequest {
+	panic("implement me")
 }
-func (m mockRecordsBadApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDnsRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Record{}, &http.Response{
-		StatusCode: 400,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("Error: 400 Bad Request")),
-	}, gopinto.GenericOpenAPIError{}
+
+func (m mockRecordsBadApiService) DnsApiRecordsGetExecute(r gopinto.ApiDnsApiRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockRecordsBadApiService) ApiDnsRecordsPost(ctx context.Context) gopinto.ApiApiDnsRecordsPostRequest {
-	return gopinto.ApiApiDnsRecordsPostRequest{
-		ApiService: m,
-	}
+
+func (m mockRecordsBadApiService) DnsApiRecordsPost(ctx context.Context) gopinto.ApiDnsApiRecordsPostRequest {
+	panic("implement me")
 }
-func (m mockRecordsBadApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDnsRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Record{
-		Name:  "record",
-		Type:  "A",
-		Class: "IN",
-		Ttl:   toInt32(1800),
-		Data:  "127.0.0.1",
-	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
+
+func (m mockRecordsBadApiService) DnsApiRecordsPostExecute(r gopinto.ApiDnsApiRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
 type mockZonesBadApiService service
 
-func (m mockZonesBadApiService) ApiDnsZonesGet(ctx context.Context) gopinto.ApiApiDnsZonesGetRequest {
-	return gopinto.ApiApiDnsZonesGetRequest{
-		ApiService: m,
-	}
+func (m mockZonesBadApiService) DnsApiZonesDelete(ctx context.Context) gopinto.ApiDnsApiZonesDeleteRequest {
+	panic("implement me")
 }
 
-func (m mockZonesBadApiService) ApiDnsZonesGetExecute(r gopinto.ApiApiDnsZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Zone{}, &http.Response{
-		StatusCode: 400,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("Error: 400 Bad Request")),
-	}, gopinto.GenericOpenAPIError{}
+func (m mockZonesBadApiService) DnsApiZonesDeleteExecute(r gopinto.ApiDnsApiZonesDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
-func (m mockZonesBadApiService) ApiDnsZonesPost(ctx context.Context) gopinto.ApiApiDnsZonesPostRequest {
-	return gopinto.ApiApiDnsZonesPostRequest{
-		ApiService: m,
-	}
+func (m mockZonesBadApiService) DnsApiZonesGet(ctx context.Context) gopinto.ApiDnsApiZonesGetRequest {
+	panic("implement me")
 }
 
-func (m mockZonesBadApiService) ApiDnsZonesPostExecute(r gopinto.ApiApiDnsZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Zone{}, &http.Response{
-		StatusCode: 400,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("Error: 400 Bad Request")),
-	}, gopinto.GenericOpenAPIError{}
+func (m mockZonesBadApiService) DnsApiZonesGetExecute(r gopinto.ApiDnsApiZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
-func (m mockZonesBadApiService) ApiDnsZonesZoneDelete(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneDeleteRequest {
-	return gopinto.ApiApiDnsZonesZoneDeleteRequest{
-		ApiService: m,
-	}
+func (m mockZonesBadApiService) DnsApiZonesPost(ctx context.Context) gopinto.ApiDnsApiZonesPostRequest {
+	panic("implement me")
 }
 
-func (m mockZonesBadApiService) ApiDnsZonesZoneDeleteExecute(r gopinto.ApiApiDnsZonesZoneDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{
-		StatusCode: 400,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("Error: 400 Bad Request")),
-	}, gopinto.GenericOpenAPIError{}
+func (m mockZonesBadApiService) DnsApiZonesPostExecute(r gopinto.ApiDnsApiZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
-func (m mockZonesBadApiService) ApiDnsZonesZoneGet(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneGetRequest {
-	return gopinto.ApiApiDnsZonesZoneGetRequest{
-		ApiService: m,
-	}
+func (m mockZonesBadApiService) DnsApiZonesZoneGet(ctx context.Context, zone string) gopinto.ApiDnsApiZonesZoneGetRequest {
+	panic("implement me")
 }
 
-func (m mockZonesBadApiService) ApiDnsZonesZoneGetExecute(r gopinto.ApiApiDnsZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Zone{}, &http.Response{
-		StatusCode: 400,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("Error: 400 Bad Request")),
-	}, gopinto.GenericOpenAPIError{}
+func (m mockZonesBadApiService) DnsApiZonesZoneGetExecute(r gopinto.ApiDnsApiZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
 type mockZonesChangeApiService service
 
-func (m mockZonesChangeApiService) ApiDnsZonesGet(ctx context.Context) gopinto.ApiApiDnsZonesGetRequest {
-	return gopinto.ApiApiDnsZonesGetRequest{
-		ApiService: m,
-	}
+func (m mockZonesChangeApiService) DnsApiZonesDelete(ctx context.Context) gopinto.ApiDnsApiZonesDeleteRequest {
+	panic("implement me")
 }
-func (m mockZonesChangeApiService) ApiDnsZonesGetExecute(r gopinto.ApiApiDnsZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Zone{
-			{
-				Name: "env1.co.",
-			},
-		}, &http.Response{
-			StatusCode: 200,
-		}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesChangeApiService) DnsApiZonesDeleteExecute(r gopinto.ApiDnsApiZonesDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockZonesChangeApiService) ApiDnsZonesPost(ctx context.Context) gopinto.ApiApiDnsZonesPostRequest {
-	return gopinto.ApiApiDnsZonesPostRequest{
-		ApiService: m,
-	}
+
+func (m mockZonesChangeApiService) DnsApiZonesGet(ctx context.Context) gopinto.ApiDnsApiZonesGetRequest {
+	panic("implement me")
 }
-func (m mockZonesChangeApiService) ApiDnsZonesPostExecute(r gopinto.ApiApiDnsZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Zone{
-			Name: "env0-changed.co.",
-		}, &http.Response{
-			StatusCode: 200,
-		}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesChangeApiService) DnsApiZonesGetExecute(r gopinto.ApiDnsApiZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockZonesChangeApiService) ApiDnsZonesZoneDelete(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneDeleteRequest {
-	return gopinto.ApiApiDnsZonesZoneDeleteRequest{
-		ApiService: m,
-	}
+
+func (m mockZonesChangeApiService) DnsApiZonesPost(ctx context.Context) gopinto.ApiDnsApiZonesPostRequest {
+	panic("implement me")
 }
-func (m mockZonesChangeApiService) ApiDnsZonesZoneDeleteExecute(r gopinto.ApiApiDnsZonesZoneDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{
-		StatusCode: 200,
-	}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesChangeApiService) DnsApiZonesPostExecute(r gopinto.ApiDnsApiZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
-func (m mockZonesChangeApiService) ApiDnsZonesZoneGet(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneGetRequest {
-	return gopinto.ApiApiDnsZonesZoneGetRequest{
-		ApiService: m,
-	}
+
+func (m mockZonesChangeApiService) DnsApiZonesZoneGet(ctx context.Context, zone string) gopinto.ApiDnsApiZonesZoneGetRequest {
+	panic("implement me")
 }
-func (m mockZonesChangeApiService) ApiDnsZonesZoneGetExecute(r gopinto.ApiApiDnsZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Zone{
-			Name: "env0-changed.co.",
-		}, &http.Response{
-			StatusCode: 200,
-		}, gopinto.GenericOpenAPIError{}
+
+func (m mockZonesChangeApiService) DnsApiZonesZoneGetExecute(r gopinto.ApiDnsApiZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
 type mockRecordsChangeApiService service
 
-func (m mockRecordsChangeApiService) ApiDnsRecordsDelete(ctx context.Context) gopinto.ApiApiDnsRecordsDeleteRequest {
-	return gopinto.ApiApiDnsRecordsDeleteRequest{
-		ApiService: m,
-	}
-}
-func (m mockRecordsChangeApiService) ApiDnsRecordsDeleteExecute(r gopinto.ApiApiDnsRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{
-		StatusCode: 200,
-	}, gopinto.GenericOpenAPIError{}
-}
-func (m mockRecordsChangeApiService) ApiDnsRecordsGet(ctx context.Context) gopinto.ApiApiDnsRecordsGetRequest {
-	return gopinto.ApiApiDnsRecordsGetRequest{
-		ApiService: m,
-	}
-}
-func (m mockRecordsChangeApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDnsRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Record{
-			{
-				Name:  "record",
-				Type:  "A",
-				Class: "IN",
-				Ttl:   toInt32(1800),
-			},
-		}, &http.Response{
-			StatusCode: 200,
-		}, gopinto.GenericOpenAPIError{}
-}
-func (m mockRecordsChangeApiService) ApiDnsRecordsPost(ctx context.Context) gopinto.ApiApiDnsRecordsPostRequest {
-	return gopinto.ApiApiDnsRecordsPostRequest{
-		ApiService: m,
-	}
-}
-func (m mockRecordsChangeApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDnsRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Record{
-		Name:  "record",
-		Type:  "A",
-		Class: "IN",
-		Ttl:   toInt32(1800),
-		Data:  "127.0.0.1",
-	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
-}
-func NewMockClient(recordsApi gopinto.RecordsApi, zonesApi gopinto.ZonesApi) *mockClient {
-	return &mockClient{
-		RecordsApi: recordsApi,
-		ZonesApi:   zonesApi,
-	}
-}
-func (m mockRecordsApiService) ApiDnsRecordsDelete(ctx context.Context) gopinto.ApiApiDnsRecordsDeleteRequest {
-	return gopinto.ApiApiDnsRecordsDeleteRequest{
-		ApiService: m,
-	}
-}
-func (m mockRecordsApiService) ApiDnsRecordsDeleteExecute(r gopinto.ApiApiDnsRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
-}
-func (m mockRecordsApiService) ApiDnsRecordsGet(ctx context.Context) gopinto.ApiApiDnsRecordsGetRequest {
-	return gopinto.ApiApiDnsRecordsGetRequest{
-		ApiService: m,
-	}
-}
-func (m mockRecordsApiService) ApiDnsRecordsGetExecute(r gopinto.ApiApiDnsRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Record{
-		{
-			Name:  "record",
-			Type:  "A",
-			Class: "IN",
-			Ttl:   toInt32(1800),
-			Data:  "127.0.0.1",
-		},
-	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
-
-}
-func (m mockRecordsApiService) ApiDnsRecordsPost(ctx context.Context) gopinto.ApiApiDnsRecordsPostRequest {
-	return gopinto.ApiApiDnsRecordsPostRequest{
-		ApiService: m,
-	}
-}
-func (m mockRecordsApiService) ApiDnsRecordsPostExecute(r gopinto.ApiApiDnsRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Record{
-		Name:  "pinto",
-		Type:  "A",
-		Class: "IN",
-		Ttl:   toInt32(1800),
-		Data:  "127.0.0.1",
-	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
+func (m mockRecordsChangeApiService) DnsApiRecordsDelete(ctx context.Context) gopinto.ApiDnsApiRecordsDeleteRequest {
+	panic("implement me")
 }
 
-func (m mockZonesApiService) ApiDnsZonesGet(ctx context.Context) gopinto.ApiApiDnsZonesGetRequest {
-	return gopinto.ApiApiDnsZonesGetRequest{
-		ApiService: m,
-	}
+func (m mockRecordsChangeApiService) DnsApiRecordsDeleteExecute(r gopinto.ApiDnsApiRecordsDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
-func (m mockZonesApiService) ApiDnsZonesGetExecute(r gopinto.ApiApiDnsZonesGetRequest) ([]gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return []gopinto.Zone{
-		{
-			Name: "env0-1.co.",
-		},
-	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
+func (m mockRecordsChangeApiService) DnsApiRecordsGet(ctx context.Context) gopinto.ApiDnsApiRecordsGetRequest {
+	panic("implement me")
 }
 
-func (m mockZonesApiService) ApiDnsZonesPost(ctx context.Context) gopinto.ApiApiDnsZonesPostRequest {
-	return gopinto.ApiApiDnsZonesPostRequest{
-		ApiService: m,
-	}
+func (m mockRecordsChangeApiService) DnsApiRecordsGetExecute(r gopinto.ApiDnsApiRecordsGetRequest) ([]gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
 
-func (m mockZonesApiService) ApiDnsZonesPostExecute(r gopinto.ApiApiDnsZonesPostRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	return gopinto.Zone{
-		Name: "env0-2.co.",
-	}, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
+func (m mockRecordsChangeApiService) DnsApiRecordsPost(ctx context.Context) gopinto.ApiDnsApiRecordsPostRequest {
+	panic("implement me")
 }
 
-func (m mockZonesApiService) ApiDnsZonesZoneDelete(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneDeleteRequest {
-	return gopinto.ApiApiDnsZonesZoneDeleteRequest{
-		ApiService: m,
-	}
-}
-
-func (m mockZonesApiService) ApiDnsZonesZoneDeleteExecute(r gopinto.ApiApiDnsZonesZoneDeleteRequest) (*http.Response, gopinto.GenericOpenAPIError) {
-	return &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
-}
-
-func (m mockZonesApiService) ApiDnsZonesZoneGet(ctx context.Context, zone string) gopinto.ApiApiDnsZonesZoneGetRequest {
-	return gopinto.ApiApiDnsZonesZoneGetRequest{
-		ApiService: m,
-	}
-}
-
-func (m mockZonesApiService) ApiDnsZonesZoneGetExecute(r gopinto.ApiApiDnsZonesZoneGetRequest) (gopinto.Zone, *http.Response, gopinto.GenericOpenAPIError) {
-	zone := gopinto.Zone{
-		Name: "env0-1.co.",
-	}
-	return zone, &http.Response{StatusCode: 200}, gopinto.GenericOpenAPIError{}
-}
-
-func toInt32(x int32) *int32 {
-	return &x
+func (m mockRecordsChangeApiService) DnsApiRecordsPostExecute(r gopinto.ApiDnsApiRecordsPostRequest) (gopinto.Record, *http.Response, gopinto.GenericOpenAPIError) {
+	panic("implement me")
 }
