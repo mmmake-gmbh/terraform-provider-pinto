@@ -49,10 +49,9 @@ func dataSourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	log.Printf("[INFO] Pinto: Read Zone %s at %s for %s \n", zone.name, zone.provider, zone.environment)
 
-	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone.name).Provider(zone.provider)
-	if zone.environment != "" {
-		request = request.Environment(zone.environment)
-	}
+	request := pinto.client.ZonesApi.
+		DnsApiZonesZoneGet(pctx, zone.name)
+
 	_, resp, err := request.Execute()
 	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] ZONE READ", err.Error(), resp))

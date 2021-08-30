@@ -6,9 +6,9 @@ import (
 	"log"
 	"strings"
 
+	"github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/camaoag/project-pinto-sdk-go"
 )
 
 func resourceDnsZone() *schema.Resource {
@@ -65,10 +65,8 @@ func computeZoneId(zone Zone) string {
 
 func createZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
 	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
-	request := client.ZonesApi.ApiDnsZonesPost(ctx).CreateZoneRequestModel(gopinto.CreateZoneRequestModel{
-		Provider:    zone.provider,
-		Environment: *gopinto.NewNullableString(&zone.environment),
-		Name:        zone.name,
+	request := client.ZonesApi.DnsApiZonesPost(ctx).CreateZoneRequestModel(gopinto.CreateZoneRequestModel{
+		Name: zone.name,
 	})
 	_, resp, gErr := request.Execute()
 	if resp.StatusCode >= 400{
@@ -118,10 +116,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, provider, environment)
 
-	request := pinto.client.ZonesApi.ApiDnsZonesZoneGet(pctx, zone).Provider(provider)
-	if environment != "" {
-		request = request.Environment(environment)
-	}
+	request := pinto.client.ZonesApi.DnsApiZonesZoneGet(pctx, zone)
 	z, resp, gErr := request.Execute()
 	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("ZONE READ", gErr.Error(), resp))
@@ -136,10 +131,8 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 
 func deleteZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
 	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
-	request := client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone.name).Provider(zone.provider)
-	if zone.environment != "" {
-		request = request.Environment(zone.environment)
-	}
+	// request := client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone.name).Provider(zone.provider)
+	request := client.ZonesApi.DnsApiZonesDelete(ctx).Name(zone.name)
 	resp, err := request.Execute()
 	if  resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("ZONE DELETE", err.Error(), resp))

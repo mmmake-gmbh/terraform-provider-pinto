@@ -93,10 +93,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	zone := d.Get("zone").(string)
 	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, provider, environment)
 
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Provider(provider).Zone(zone)
-	if environment != "" {
-		request = request.Environment(environment)
-	}
+	request := pinto.client.RecordsApi.DnsApiRecordsGet(pctx).Zone(zone)
 	val, ok := d.GetOk("record_type")
 	if ok {
 		request.RecordType(gopinto.RecordType(val.(string)))

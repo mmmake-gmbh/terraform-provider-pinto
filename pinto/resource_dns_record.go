@@ -8,9 +8,9 @@ import (
 	"log"
 	"strings"
 
+	"github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/camaoag/project-pinto-sdk-go"
 )
 
 func resourceDnsRecord() *schema.Resource {
@@ -94,7 +94,7 @@ func dataToRecord(d *schema.ResourceData, provider *PintoProvider) (Record, erro
 	record.Name = d.Get("name").(string)
 	record.Type = gopinto.RecordType(d.Get("type").(string))
 	record.Data = d.Get("data").(string)
-	record.Class = d.Get("class").(string)
+	record.Class = gopinto.RecordClass(d.Get("class").(string))
 	_, ok := d.GetOk("ttl")
 	if ok {
 		ttl := int32(d.Get("ttl").(int))
@@ -106,13 +106,11 @@ func dataToRecord(d *schema.ResourceData, provider *PintoProvider) (Record, erro
 func createRecord(client *gopinto.APIClient, ctx context.Context, record Record) error {
 	log.Printf("[DEBUG] Pinto: Creating Record:")
 	printDebugRecord(record)
-	crr := gopinto.NewCreateRecordRequestModel(record.provider, record.zone, record.Name, record.Type, record.Data)
-	if record.environment != "" {
-		crr.SetEnvironment(record.environment)
-	}
+	crr := gopinto.NewCreateRecordRequestModel(record.zone, record.Name, record.Type, record.Data)
+
 	crr.SetClass(gopinto.RecordClass(record.Class))
 	crr.SetTtl(int32(*record.Ttl))
-	_, resp, gErr := client.RecordsApi.ApiDnsRecordsPost(ctx).CreateRecordRequestModel(*crr).Execute()
+	_, resp, gErr := client.RecordsApi.DnsApiRecordsPost(ctx).CreateRecordRequestModel(*crr).Execute()
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("RECORD CREATE", gErr.Error(), resp))
 	}
@@ -172,10 +170,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		pinto.environment, pinto.provider)
 	log.Printf("[DEBUG] Pinto: Reading Record:")
 	printDebugRecord(record)
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).Provider(record.provider)
-	if record.environment != "" {
-		request = request.Environment(record.environment)
-	}
+	request := pinto.client.RecordsApi.DnsApiRecordsGet(ctx).Name(record.Name).RecordType(record.Type).Zone(record.zone)
 	r, resp, gErr := request.Execute()
 
 	if resp.StatusCode >= 400 {
@@ -201,17 +196,11 @@ func deleteRecord(client *gopinto.APIClient, ctx context.Context, record Record)
 	log.Printf("[DEBUG] Pinto: Working in env %s of pinto %s", record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Deleting Record:")
 	printDebugRecord(record)
-	rBody := make(map[string]string)
 
-	request := client.RecordsApi.ApiDnsRecordsDelete(ctx).
-		Zone(record.zone).
-		Provider(record.provider).
-		Name(record.Name).
-		RecordType(record.Type).
-		RequestBody(rBody)
-	if record.environment != "" {
-		request = request.Environment(record.environment)
-	}
+	// TODO: Clarify request body
+	// rBody := make(map[string]string)
+
+	request := client.RecordsApi.DnsApiRecordsDelete(ctx).Zone(record.zone).Name(record.Name).RecordType(record.Type)
 	resp, err := request.Execute()
 	if err.Error() != "" {
 		return fmt.Errorf(handleClientError("RECORD DELETE", err.Error(), resp))
@@ -272,8 +261,8 @@ func buildRecordsFromChange(p *PintoProvider, d *schema.ResourceData) (Record, R
 	}
 	if d.HasChange("class") {
 		o, n := d.GetChange("class")
-		oldRecord.Class = o.(string)
-		newRecord.Class = n.(string)
+		oldRecord.Class = gopinto.RecordClass(o.(string))
+		newRecord.Class = gopinto.RecordClass(n.(string))
 	}
 	if d.HasChange("ttl") {
 		o, n := d.GetChange("ttl")
@@ -341,11 +330,7 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	record.provider = in[4]
 
 	log.Printf("[DEBUG] retrieving information for %s", d.Id())
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).Name(record.Name).RecordType(record.Type).Zone(record.zone).
-		Provider(record.provider)
-	if record.environment != "" {
-		request = request.Environment(record.environment)
-	}
+	request := pinto.client.RecordsApi.DnsApiRecordsGet(ctx).Zone(record.zone).Name(record.Name).RecordType(record.Type)
 	r, resp, gErr := request.Execute()
 	if gErr.Error() != "" {
 		return nil, fmt.Errorf(handleClientError("IMPORT RECORD", gErr.Error(), resp))

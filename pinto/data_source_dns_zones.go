@@ -2,9 +2,9 @@ package pinto
 
 import (
 	"context"
+	"github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/camaoag/project-pinto-sdk-go"
 	"log"
 )
 
@@ -62,10 +62,7 @@ func dataSourceDnsZonesRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	log.Printf("[INFO] Pinto: Read zones at %s for %s \n", pinto.provider, pinto.environment)
 
-	request := pinto.client.ZonesApi.ApiDnsZonesGet(pctx).Provider(provider)
-	if environment != "" {
-		request = request.Environment(environment)
-	}
+	request := pinto.client.ZonesApi.DnsApiZonesGet(pctx)
 	rz, resp, err := request.Execute()
 	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("[DS] ZONES READ", err.Error(), resp))

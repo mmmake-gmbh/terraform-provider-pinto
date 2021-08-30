@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
+	"github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/camaoag/project-pinto-sdk-go"
 )
 
 func dataSourceDnsRecord() *schema.Resource {
@@ -88,14 +88,12 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	request := pinto.client.RecordsApi.ApiDnsRecordsGet(pctx).
-		Provider(provider).
+
+	request := pinto.client.RecordsApi.DnsApiRecordsGet(pctx).
 		Zone(zone).
 		Name(name).
 		RecordType(gopinto.RecordType(_type))
-	if environment != "" {
-		request = request.Environment(environment)
-	}
+
 	r, resp, gErr := request.Execute()
 
 	if resp.StatusCode >= 400 {

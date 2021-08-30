@@ -6,9 +6,9 @@ import (
 	"log"
 	"strings"
 
+	"github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/camaoag/project-pinto-sdk-go"
 	cc "golang.org/x/oauth2/clientcredentials"
 )
 
@@ -51,12 +51,12 @@ func Provider(client *gopinto.APIClient) *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			schemaProvider: {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Optional:    false,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyProvider, nil),
 			},
 			schemaEnvironment: {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Optional:    false,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyEnvironment, nil),
 			},
 			//TODO: make optional when a fixed base url exists
