@@ -2,6 +2,7 @@ package pinto
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -16,28 +17,32 @@ type IPintoProvider interface{}
 type PintoProvider struct {
 	IPintoProvider
 
-	client      *gopinto.APIClient
-	apiKey      string
-	provider    string
-	environment string
+	client        	*gopinto.APIClient
+	apiKey        	string
+	provider      	string
+	environment   	string
+	// TODO: This might be removed as the xApiOptions could be built in the provider prepare
+	credentialsId 	string
+	xApiOptions	 	string
 }
 
 const (
-	schemaBaseUrl      = "base_url"
-	schemaTokenUrl     = "token_url"
-	schemaClientId     = "client_id"
-	schemaClientSecret = "client_secret"
-	schemaClientScope  = "client_scope"
-	schemaApiKey       = "api_key"
+	schemaBaseUrl       = "base_url"
+	schemaTokenUrl      = "token_url"
+	schemaClientId      = "client_id"
+	schemaClientSecret  = "client_secret"
+	schemaClientScope   = "client_scope"
+	schemaApiKey        = "api_key"
 
-	envKeyBaseUrl      = "PINTO_BASE_URL"
-	envKeyTokenUrl     = "PINTO_TOKEN_URL"
-	envKeyProvider     = "PINTO_PROVIDER"
-	envKeyEnvironment  = "PINTO_ENVIRONMENT"
-	envKeyApiKey       = "PINTO_API_KEY"
-	envKeyClientId     = "PINTO_CLIENT_ID"
-	envKeyClientSecret = "PINTO_CLIENT_SECRET"
-	envKeyClientScope  = "PINTO_CLIENT_SCOPE"
+	envKeyBaseUrl      	= "PINTO_BASE_URL"
+	envKeyTokenUrl     	= "PINTO_TOKEN_URL"
+	envKeyProvider     	= "PINTO_PROVIDER"
+	envKeyEnvironment  	= "PINTO_ENVIRONMENT"
+	envKeyApiKey       	= "PINTO_API_KEY"
+	envKeyClientId     	= "PINTO_CLIENT_ID"
+	envKeyClientSecret 	= "PINTO_CLIENT_SECRET"
+	envKeyClientScope  	= "PINTO_CLIENT_SCOPE"
+	envKeyCredentialsId	= "PINTO_CREDENTIALS_ID"
 )
 
 func NewDefaultProvider() *schema.Provider {
@@ -58,6 +63,11 @@ func Provider(client *gopinto.APIClient) *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    false,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyEnvironment, nil),
+			},
+			schemaCredentialsId: {
+				Type: 		schema.TypeString,
+				Optional: true,
+				DefaultFunc: schema.EnvDefaultFunc(envKeyCredentialsId, nil),
 			},
 			//TODO: make optional when a fixed base url exists
 			schemaBaseUrl: {
@@ -174,6 +184,26 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	} else {
 		provider.environment = ""
 	}
+	_, ok = d.GetOk(schemaCredentialsId)
+	if ok {
+		provider.credentialsId = d.Get(schemaCredentialsId).(string)
+	} else {
+		provider.credentialsId = ""
+	}
+
+	// TODO: Clarify non mandatory cases
+	var xApiOptions, err = json.Marshal(XApiOptions{
+		AccessOptions: AccessOptions{
+			Provider:      provider.provider,
+			Environment:   provider.environment,
+			CredentialsId: provider.credentialsId,
+		},
+		Meta:          nil,
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	provider.xApiOptions = string(xApiOptions)
 
 	clientConf := gopinto.NewConfiguration()
 	clientConf.Servers[0].URL = d.Get(schemaBaseUrl).(string)

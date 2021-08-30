@@ -14,6 +14,7 @@ const (
 	schemaProvider = "pinto_provider"
 	// using name "pinto_environment" to keep the same naming schema as schemaProvider
 	schemaEnvironment = "pinto_environment"
+	schemaCredentialsId = "pinto_credentials_id"
 )
 
 func handleClientError(op string, errorString string, httpResponse *http.Response) string {
