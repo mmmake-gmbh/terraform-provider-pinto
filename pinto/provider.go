@@ -200,9 +200,17 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 			CredentialsId: provider.credentialsId,
 		},
 	})
+
 	if err != nil {
-		fmt.Println(err)
+		diags = append(
+			diags,
+			diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "CredentialsId not set",
+				Detail:   "Unable to setup xApiOptions",
+			})
 	}
+
 	provider.xApiOptions = string(xApiOptions)
 
 	clientConf := gopinto.NewConfiguration()
