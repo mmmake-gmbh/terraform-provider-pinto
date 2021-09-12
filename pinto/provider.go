@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/camaoag/project-pinto-sdk-go"
+	gopinto "github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	cc "golang.org/x/oauth2/clientcredentials"
@@ -17,13 +17,13 @@ type IPintoProvider interface{}
 type PintoProvider struct {
 	IPintoProvider
 
-	client        	*gopinto.APIClient
-	apiKey        	string
-	provider      	string
-	environment   	string
+	client      *gopinto.APIClient
+	apiKey      string
+	provider    string
+	environment string
 	// TODO: This might be removed as the xApiOptions could be built in the provider prepare
-	credentialsId 	string
-	xApiOptions	 	string
+	credentialsId string
+	xApiOptions   string
 }
 
 const (
@@ -33,16 +33,17 @@ const (
 	schemaClientSecret  = "client_secret"
 	schemaClientScope   = "client_scope"
 	schemaApiKey        = "api_key"
+	schemaCredentialsId = "credentials_id"
 
-	envKeyBaseUrl      	= "PINTO_BASE_URL"
-	envKeyTokenUrl     	= "PINTO_TOKEN_URL"
-	envKeyProvider     	= "PINTO_PROVIDER"
-	envKeyEnvironment  	= "PINTO_ENVIRONMENT"
-	envKeyApiKey       	= "PINTO_API_KEY"
-	envKeyClientId     	= "PINTO_CLIENT_ID"
-	envKeyClientSecret 	= "PINTO_CLIENT_SECRET"
-	envKeyClientScope  	= "PINTO_CLIENT_SCOPE"
-	envKeyCredentialsId	= "PINTO_CREDENTIALS_ID"
+	envKeyBaseUrl       = "PINTO_BASE_URL"
+	envKeyTokenUrl      = "PINTO_TOKEN_URL"
+	envKeyProvider      = "PINTO_PROVIDER"
+	envKeyEnvironment   = "PINTO_ENVIRONMENT"
+	envKeyApiKey        = "PINTO_API_KEY"
+	envKeyClientId      = "PINTO_CLIENT_ID"
+	envKeyClientSecret  = "PINTO_CLIENT_SECRET"
+	envKeyClientScope   = "PINTO_CLIENT_SCOPE"
+	envKeyCredentialsId = "PINTO_CREDENTIALS_ID"
 )
 
 func NewDefaultProvider() *schema.Provider {
@@ -56,17 +57,17 @@ func Provider(client *gopinto.APIClient) *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			schemaProvider: {
 				Type:        schema.TypeString,
-				Optional:    false,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyProvider, nil),
 			},
 			schemaEnvironment: {
 				Type:        schema.TypeString,
-				Optional:    false,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyEnvironment, nil),
 			},
 			schemaCredentialsId: {
-				Type: 		schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc(envKeyCredentialsId, nil),
 			},
 			//TODO: make optional when a fixed base url exists
@@ -157,9 +158,9 @@ func configureOAuthClient(d *schema.ResourceData) (cc.Config, error) {
 		}
 	} else {
 		oauthConfig = cc.Config{
-			TokenURL:     tokenUrl,
 			ClientID:     clientId.(string),
 			ClientSecret: clientSecret.(string),
+			TokenURL:     tokenUrl,
 		}
 	}
 
@@ -198,7 +199,6 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 			Environment:   provider.environment,
 			CredentialsId: provider.credentialsId,
 		},
-		Meta:          nil,
 	})
 	if err != nil {
 		fmt.Println(err)

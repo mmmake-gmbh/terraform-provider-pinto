@@ -8,7 +8,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/camaoag/project-pinto-sdk-go"
+	gopinto "github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -103,17 +103,28 @@ func dataToRecord(d *schema.ResourceData, provider *PintoProvider) (Record, erro
 	return record, nil
 }
 
-func createRecord(client *gopinto.APIClient, ctx context.Context, record Record) error {
+func createRecord(client *gopinto.APIClient, xApiOptions string, ctx context.Context, record Record) error {
 	log.Printf("[DEBUG] Pinto: Creating Record:")
 	printDebugRecord(record)
+	log.Printf("[DEBUG] Pinto: Using: %v", xApiOptions)
 	crr := gopinto.NewCreateRecordRequestModel(record.zone, record.Name, record.Type, record.Data)
 
 	crr.SetClass(gopinto.RecordClass(record.Class))
 	crr.SetTtl(int32(*record.Ttl))
-	_, resp, gErr := client.RecordsApi.DnsApiRecordsPost(ctx).CreateRecordRequestModel(*crr).Execute()
+	_, resp, gErr := client.RecordsApi.
+		DnsApiRecordsPost(ctx).
+		CreateRecordRequestModel(*crr).
+		XApiOptions(xApiOptions).
+		Execute()
+
+	if resp == nil {
+		return fmt.Errorf("API ERROR %v", gErr.Error())
+	}
+
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("RECORD CREATE", gErr.Error(), resp))
 	}
+
 	return nil
 }
 
@@ -138,7 +149,7 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 		ttl32 := int32(3600)
 		record.Ttl = &ttl32
 	}
-	err = createRecord(pinto.client, pctx, record)
+	err = createRecord(pinto.client, pinto.xApiOptions, pctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -170,7 +181,13 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 		pinto.environment, pinto.provider)
 	log.Printf("[DEBUG] Pinto: Reading Record:")
 	printDebugRecord(record)
-	request := pinto.client.RecordsApi.DnsApiRecordsGet(ctx).Name(record.Name).RecordType(record.Type).Zone(record.zone)
+	request := pinto.client.RecordsApi.
+		DnsApiRecordsGet(ctx).
+		Name(record.Name).
+		RecordType(record.Type).
+		XApiOptions(pinto.xApiOptions).
+		Zone(record.zone)
+
 	r, resp, gErr := request.Execute()
 
 	if resp.StatusCode >= 400 {
@@ -191,7 +208,7 @@ func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interf
 	return diags
 }
 
-func deleteRecord(client *gopinto.APIClient, ctx context.Context, record Record) error {
+func deleteRecord(client *gopinto.APIClient, xApiOptions string, ctx context.Context, record Record) error {
 	log.Printf("[INFO] Pinto: Deleting record with id %s in environment %s of provider %s", record.id, record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Working in env %s of pinto %s", record.environment, record.provider)
 	log.Printf("[DEBUG] Pinto: Deleting Record:")
@@ -200,7 +217,13 @@ func deleteRecord(client *gopinto.APIClient, ctx context.Context, record Record)
 	// TODO: Clarify request body
 	// rBody := make(map[string]string)
 
-	request := client.RecordsApi.DnsApiRecordsDelete(ctx).Zone(record.zone).Name(record.Name).RecordType(record.Type)
+	request := client.RecordsApi.
+		DnsApiRecordsDelete(ctx).
+		Zone(record.zone).
+		Name(record.Name).
+		XApiOptions(xApiOptions).
+		RecordType(record.Type)
+
 	resp, err := request.Execute()
 	if err.Error() != "" {
 		return fmt.Errorf(handleClientError("RECORD DELETE", err.Error(), resp))
@@ -223,7 +246,7 @@ func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 	record.id = d.Id()
-	err = deleteRecord(pinto.client, pctx, record)
+	err = deleteRecord(pinto.client, pinto.xApiOptions, pctx, record)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -296,11 +319,11 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = deleteRecord(pinto.client, pctx, oldRecord)
+	err = deleteRecord(pinto.client, pinto.xApiOptions, pctx, oldRecord)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createRecord(pinto.client, pctx, newRecord)
+	err = createRecord(pinto.client, pinto.xApiOptions, pctx, newRecord)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -330,7 +353,13 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 	record.provider = in[4]
 
 	log.Printf("[DEBUG] retrieving information for %s", d.Id())
-	request := pinto.client.RecordsApi.DnsApiRecordsGet(ctx).Zone(record.zone).Name(record.Name).RecordType(record.Type)
+	request := pinto.client.RecordsApi.
+		DnsApiRecordsGet(ctx).
+		Zone(record.zone).
+		Name(record.Name).
+		XApiOptions(pinto.xApiOptions).
+		RecordType(record.Type)
+
 	r, resp, gErr := request.Execute()
 	if gErr.Error() != "" {
 		return nil, fmt.Errorf(handleClientError("IMPORT RECORD", gErr.Error(), resp))

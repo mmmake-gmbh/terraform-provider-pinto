@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/camaoag/project-pinto-sdk-go"
+	gopinto "github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -92,6 +92,7 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 	request := pinto.client.RecordsApi.DnsApiRecordsGet(pctx).
 		Zone(zone).
 		Name(name).
+		XApiOptions(pinto.xApiOptions).
 		RecordType(gopinto.RecordType(_type))
 
 	r, resp, gErr := request.Execute()

@@ -2,11 +2,12 @@ package pinto
 
 import (
 	"context"
-	"github.com/camaoag/project-pinto-sdk-go"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 	"strings"
+
+	gopinto "github.com/camaoag/project-pinto-sdk-go"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourceDnsRecords() *schema.Resource {
@@ -93,7 +94,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	zone := d.Get("zone").(string)
 	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, provider, environment)
 
-	request := pinto.client.RecordsApi.DnsApiRecordsGet(pctx).Zone(zone)
+	request := pinto.client.RecordsApi.DnsApiRecordsGet(pctx).Zone(zone).XApiOptions(pinto.xApiOptions)
 	val, ok := d.GetOk("record_type")
 	if ok {
 		request.RecordType(gopinto.RecordType(val.(string)))

@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/camaoag/project-pinto-sdk-go"
+	gopinto "github.com/camaoag/project-pinto-sdk-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -63,13 +63,20 @@ func computeZoneId(zone Zone) string {
 	return z + zone.environment + "." + zone.provider + "."
 }
 
-func createZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
+func createZone(client *gopinto.APIClient, xApiOptions string, ctx context.Context, zone Zone) error {
 	log.Printf("[INFO] Pinto: Creating zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
-	request := client.ZonesApi.DnsApiZonesPost(ctx).CreateZoneRequestModel(gopinto.CreateZoneRequestModel{
-		Name: zone.name,
-	})
+	request := client.ZonesApi.DnsApiZonesPost(ctx).
+		XApiOptions(xApiOptions).
+		CreateZoneRequestModel(gopinto.CreateZoneRequestModel{
+			Name: zone.name,
+		})
 	_, resp, gErr := request.Execute()
-	if resp.StatusCode >= 400{
+
+	if resp == nil {
+		return fmt.Errorf("API ERROR %v", gErr.Error())
+	}
+
+	if resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("ZONE CREATE", gErr.Error(), resp))
 	}
 	return nil
@@ -89,7 +96,7 @@ func resourceDnsZoneCreate(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createZone(pinto.client, pctx, zone)
+	err = createZone(pinto.client, pinto.xApiOptions, pctx, zone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -116,7 +123,10 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, provider, environment)
 
-	request := pinto.client.ZonesApi.DnsApiZonesZoneGet(pctx, zone)
+	request := pinto.client.ZonesApi.
+		DnsApiZonesZoneGet(pctx, zone).
+		XApiOptions(pinto.xApiOptions)
+
 	z, resp, gErr := request.Execute()
 	if resp.StatusCode >= 400 {
 		return diag.Errorf(handleClientError("ZONE READ", gErr.Error(), resp))
@@ -129,12 +139,12 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return diags
 }
 
-func deleteZone(client *gopinto.APIClient, ctx context.Context, zone Zone) error {
+func deleteZone(client *gopinto.APIClient, xApiOptions string, ctx context.Context, zone Zone) error {
 	log.Printf("[INFO] Pinto: Deleting zone %s in environment %s of provider %s", zone.name, zone.environment, zone.provider)
 	// request := client.ZonesApi.ApiDnsZonesZoneDelete(ctx, zone.name).Provider(zone.provider)
-	request := client.ZonesApi.DnsApiZonesDelete(ctx).Name(zone.name)
+	request := client.ZonesApi.DnsApiZonesDelete(ctx).Name(zone.name).XApiOptions(xApiOptions)
 	resp, err := request.Execute()
-	if  resp.StatusCode >= 400 {
+	if resp.StatusCode >= 400 {
 		return fmt.Errorf(handleClientError("ZONE DELETE", err.Error(), resp))
 	}
 	return nil
@@ -154,7 +164,7 @@ func resourceDnsZoneDelete(ctx context.Context, d *schema.ResourceData, m interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = deleteZone(pinto.client, pctx, zone)
+	err = deleteZone(pinto.client, pinto.xApiOptions, pctx, zone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -182,11 +192,11 @@ func resourceDnsZoneUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	oldZoneS, newZoneS := d.GetChange("name")
 	oldZone.name = oldZoneS.(string)
 	newZone.name = newZoneS.(string)
-	err = deleteZone(pinto.client, pctx, oldZone)
+	err = deleteZone(pinto.client, pinto.xApiOptions, pctx, oldZone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = createZone(pinto.client, pctx, newZone)
+	err = createZone(pinto.client, pinto.xApiOptions, pctx, newZone)
 	if err != nil {
 		return diag.FromErr(err)
 	}
