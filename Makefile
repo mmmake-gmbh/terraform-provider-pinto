@@ -5,6 +5,7 @@ NAME=pinto
 BINARY=terraform-provider-${NAME}
 VERSION=0.1
 OS_ARCH=linux_amd64
+EXAMPLES=examples
 
 default: install
 
@@ -35,6 +36,12 @@ test:
 
 testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m -cover
+
+examples: install
+	terraform init $(EXAMPLES)
+	terraform plan $(EXAMPLES)
+	terraform apply $(EXAMPLES)
+	terraform destroy $(EXAMPLES)
 
 clean:
 	rm -rf examples/.terraform

@@ -17,11 +17,10 @@ type IPintoProvider interface{}
 type PintoProvider struct {
 	IPintoProvider
 
-	client      *gopinto.APIClient
-	apiKey      string
-	provider    string
-	environment string
-	// TODO: This might be removed as the xApiOptions could be built in the provider prepare
+	client        *gopinto.APIClient
+	apiKey        string
+	provider      string
+	environment   string
 	credentialsId string
 	xApiOptions   string
 }
@@ -192,7 +191,6 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 		provider.credentialsId = ""
 	}
 
-	// TODO: Clarify non mandatory cases
 	var xApiOptions, err = json.Marshal(XApiOptions{
 		AccessOptions: AccessOptions{
 			Provider:      provider.provider,
