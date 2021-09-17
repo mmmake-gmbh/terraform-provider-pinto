@@ -27,7 +27,7 @@ data "pinto_dns_records" "testing_zone_records" {
 }
 
 resource "pinto_dns_zone" "created_zone" {
-  name              = "test.purrrrfect."
+  name              = "test.purrrfect."
 }
 
 resource "pinto_dns_record" "test_record_2" {
