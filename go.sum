@@ -75,6 +75,8 @@ github.com/camaoag/project-pinto-sdk-go v0.0.0-20210609174249-7d3cd54705e3 h1:nG
 github.com/camaoag/project-pinto-sdk-go v0.0.0-20210609174249-7d3cd54705e3/go.mod h1:7vTeQriq/RjxWz0Ca5JPS/oVwkk0wNtfPYdB4COBHYE=
 github.com/camaoag/project-pinto-sdk-go v0.0.0-20210701093116-3ed55267ade3 h1:+IIXsa1QF683M9S7YZH4BGetSV6Fe2KT17q1UChkF7g=
 github.com/camaoag/project-pinto-sdk-go v0.0.0-20210701093116-3ed55267ade3/go.mod h1:7vTeQriq/RjxWz0Ca5JPS/oVwkk0wNtfPYdB4COBHYE=
+github.com/camaoag/project-pinto-sdk-go v0.0.0-20210830052118-575daffc5c89 h1:OdZ8MEYeixcqTp3YYkJpvA2WpRpp+siy7nAr8lGPZ+s=
+github.com/camaoag/project-pinto-sdk-go v0.0.0-20210830052118-575daffc5c89/go.mod h1:7vTeQriq/RjxWz0Ca5JPS/oVwkk0wNtfPYdB4COBHYE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
