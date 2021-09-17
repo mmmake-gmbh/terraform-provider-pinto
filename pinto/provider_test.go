@@ -30,7 +30,6 @@ func selectProviderConfiguration(mock ClientMock) map[string]func() (*schema.Pro
 	return map[string]func() (*schema.Provider, error){
 		"pinto": providerConfigurations[mock],
 	}
-
 }
 
 var providerConfigurations = map[ClientMock]func() (*schema.Provider, error){
@@ -39,6 +38,8 @@ var providerConfigurations = map[ClientMock]func() (*schema.Provider, error){
 
 		os.Setenv("PINTO_BASE_URL", "https://mock.co")
 		os.Setenv("PINTO_CREDENTIALS_ID", "4d4fe4ac-586e-4121-9603-43acf2b0ce8d")
+		os.Setenv("PINTO_PROVIDER", "pintoprovider")
+		os.Setenv("PINTO_ENVIRONMENT", "mock")
 
 		provider = Provider((*gopinto.APIClient)(NewMockClient(
 			mockRecordsApiService{},
@@ -52,6 +53,8 @@ var providerConfigurations = map[ClientMock]func() (*schema.Provider, error){
 
 		os.Setenv("PINTO_BASE_URL", "https://mock.co")
 		os.Setenv("PINTO_CREDENTIALS_ID", "4d4fe4ac-586e-4121-9603-43acf2b0ce8d")
+		os.Setenv("PINTO_PROVIDER", "pintoprovider")
+		os.Setenv("PINTO_ENVIRONMENT", "mock")
 
 		provider = Provider((*gopinto.APIClient)(NewMockClient(
 			mockRecordsBadApiService{},
@@ -65,6 +68,8 @@ var providerConfigurations = map[ClientMock]func() (*schema.Provider, error){
 
 		os.Setenv("PINTO_BASE_URL", "https://mock.co")
 		os.Setenv("PINTO_CREDENTIALS_ID", "4d4fe4ac-586e-4121-9603-43acf2b0ce8d")
+		os.Setenv("PINTO_PROVIDER", "pintoprovider")
+		os.Setenv("PINTO_ENVIRONMENT", "mock")
 
 		provider = Provider((*gopinto.APIClient)(NewMockClient(
 			mockRecordsChangeApiService{},
@@ -78,6 +83,8 @@ var providerConfigurations = map[ClientMock]func() (*schema.Provider, error){
 
 		os.Setenv("PINTO_BASE_URL", "https://mock.co")
 		os.Setenv("PINTO_CREDENTIALS_ID", "4d4fe4ac-586e-4121-9603-43acf2b0ce8d")
+		os.Setenv("PINTO_PROVIDER", "pintoprovider")
+		os.Setenv("PINTO_ENVIRONMENT", "mock")
 
 		provider = Provider((*gopinto.APIClient)(NewMockClient(
 			mockRecordsCreateApiService{},
@@ -145,8 +152,6 @@ func TestProviderUnknownAttributes(t *testing.T) {
 					ExpectError: regexp.MustCompile("Error: 400 Bad Request"),
 					Config: `
  data "pinto_dns_records" "records_unknown_provider" {
- 	pinto_provider    = "unknown"
- 	pinto_environment = "unknown"
  	zone              = "somewhere.co."
  }
  			`,
@@ -160,8 +165,6 @@ func TestProviderUnknownAttributes(t *testing.T) {
 					ExpectError: regexp.MustCompile("Error: 400 Bad Request"),
 					Config: `
  data "pinto_dns_zone" "zone1" {
-   	pinto_provider    = "unkown"
-   	pinto_environment = "unknown"
    	name              = "unknown"
  }
  			`,
@@ -171,8 +174,7 @@ func TestProviderUnknownAttributes(t *testing.T) {
 					ExpectError: regexp.MustCompile("Error: 400 Bad Request"),
 					Config: `
  data "pinto_dns_zones" "zones" {
- 	pinto_provider    = "unknown"
- 	pinto_environment = "unknown"
+
  }
  			`,
 					Destroy: true,
@@ -180,8 +182,6 @@ func TestProviderUnknownAttributes(t *testing.T) {
 				{
 					Config: `
  resource "pinto_dns_zone" "unknown" {
-   	pinto_environment = "unknown"
-   	pinto_provider    = "unknown"
  	name = "unknown.co."
  }
  			`,
@@ -190,8 +190,6 @@ func TestProviderUnknownAttributes(t *testing.T) {
 				{
 					Config: `
  resource "pinto_dns_record" "env0_unknown" {
-   pinto_provider    = "unknown"
-   pinto_environment = "unknown"
    zone              = "unknown.co."
    name              = "unknown"
    type              = "TXT"

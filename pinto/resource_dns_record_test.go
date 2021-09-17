@@ -111,8 +111,6 @@ func TestProviderPintoDnsImportRecord(t *testing.T) {
 func testAccConfigResourceDNSRecord(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_record" "env0" {
-	pinto_provider    = "digitalocean"
-	pinto_environment = "prod1"
 	zone              = "env0.co."
 	name              = "%s"
 	type              = "TXT"
@@ -126,8 +124,6 @@ resource "pinto_dns_record" "env0" {
 func testAccConfigResourceMissingClass(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_record" "env0" {
-	pinto_provider    = "digitalocean"
-	pinto_environment = "prod1"
 	zone              = "env1.co."
 	name              = "%s"
 	type              = "A"
@@ -139,22 +135,16 @@ resource "pinto_dns_record" "env0" {
 func testAccConfigResourceChangeRecord(name string) string {
 	return fmt.Sprintf(`
 data "pinto_dns_record" "%s" {
-	pinto_provider    = "digitalocean"
-	pinto_environment = "prod1"
 	zone              = "env0.co."
 	name              = "record"
 	type              = "A"
 }
 
 data "pinto_dns_records" "records" {
-	pinto_provider    = "digitalocean"
-	pinto_environment = "prod1"
   	zone              = "env0.co."
 }
 
 resource "pinto_dns_record" "env0" {
-	pinto_provider    = "digitalocean"
-	pinto_environment = "prod1"
 	zone              = "env1.co."
 	name              = "%s"
 	class             = "FOO"
@@ -168,8 +158,6 @@ resource "pinto_dns_record" "env0" {
 func testAccConfigResourceDNSRecordWithoutTtl(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_record" "env0" {
-  	pinto_provider    = "digitalocean"
-  	pinto_environment = "prod1"
   	zone              = "env0.co."
   	name              = "%s"
   	type              = "TXT"

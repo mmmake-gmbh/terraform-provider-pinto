@@ -76,18 +76,12 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
-	environment := getEnvironment(pinto, d)
-	provider, err := getProvider(pinto, d)
 	zone := d.Get("zone").(string)
 	name := d.Get("name").(string)
 	_type := d.Get("type").(string)
 
 	log.Printf("[INFO] Pinto: Read record for name=%s, zone=%s, type=%s, provider=%s, environment=%s",
-		name, zone, _type, provider, environment)
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
+		name, zone, _type, pinto.provider, pinto.environment)
 
 	request := pinto.client.RecordsApi.DnsApiRecordsGet(pctx).
 		Zone(zone).
@@ -105,11 +99,11 @@ func dataSourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m inte
 			"Wanted 1, got %d", name, zone, _type, pinto.provider, pinto.environment, len(r))
 	}
 
-	record := recordToRecord(r[0], zone, environment, provider)
+	record := recordToRecord(r[0], zone, pinto.environment, pinto.provider)
 	record.id = computeRecordId(record)
 
 	d.SetId(record.id)
-	err = d.Set("name", record.Name)
+	err := d.Set("name", record.Name)
 	if err != nil {
 		return diag.FromErr(err)
 	}

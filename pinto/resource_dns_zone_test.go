@@ -9,7 +9,6 @@ import (
 
 func TestProviderPintoDnsCreateZoneResource(t *testing.T) {
 	name := "test_zone"
-	provider := "digitalocean"
 	resource.Test(
 		t,
 		resource.TestCase{
@@ -17,7 +16,7 @@ func TestProviderPintoDnsCreateZoneResource(t *testing.T) {
 			ProviderFactories: selectProviderConfiguration(createResources),
 			Steps: []resource.TestStep{
 				{
-					Config: testAccConfigDNSZone(provider, name),
+					Config: testAccConfigDNSZone(name),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("pinto_dns_zone.test_zone", "name", name+"."),
 					),
@@ -49,7 +48,6 @@ func TestProviderPintoDnsChangeZoneResource(t *testing.T) {
 
 func TestProviderPintoDnsImportZones(t *testing.T) {
 	name := "test_zone"
-	provider := "digitalocean"
 
 	resource.Test(
 		t,
@@ -58,7 +56,7 @@ func TestProviderPintoDnsImportZones(t *testing.T) {
 			ProviderFactories: selectProviderConfiguration(defaultMock),
 			Steps: []resource.TestStep{
 				{
-					Config: testAccConfigDNSZone(provider, name),
+					Config: testAccConfigDNSZone(name),
 					Check: resource.ComposeTestCheckFunc(
 						resource.TestCheckResourceAttr("pinto_dns_zone.test_zone", "name", name+"."),
 					),
@@ -75,24 +73,18 @@ func TestProviderPintoDnsImportZones(t *testing.T) {
 	)
 }
 
-func testAccConfigDNSZone(provider, name string) string {
+func testAccConfigDNSZone(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_zone" "%s" {
-  	pinto_provider    = "%s"
-  	pinto_environment = "%s"
   	name              = "%s."
 }`,
 		name,
-		provider,
-		"prod1",
 		name,
 	)
 }
 func testAccConfigDNSZoneChange(name string) string {
 	return fmt.Sprintf(`
 resource "pinto_dns_zone" "env0" {
-  	pinto_provider    = "digitalocean"
-  	pinto_environment = "prod1"
   	name              = "%s"
 }`, name)
 }

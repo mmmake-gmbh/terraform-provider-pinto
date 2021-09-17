@@ -84,15 +84,8 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 		pctx = context.WithValue(pctx, gopinto.ContextAPIKeys, pinto.apiKey)
 	}
 
-	environment := getEnvironment(pinto, d)
-	provider, err := getProvider(pinto, d)
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	zone := d.Get("zone").(string)
-	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, provider, environment)
+	log.Printf("[INFO] Pinto: Read records from zone %s at %s for %s \n", zone, pinto.provider, pinto.environment)
 
 	request := pinto.client.RecordsApi.DnsApiRecordsGet(pctx).Zone(zone).XApiOptions(pinto.xApiOptions)
 	val, ok := d.GetOk("record_type")
@@ -113,7 +106,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	records := make([]interface{}, len(rrecords), len(rrecords))
 
 	for i, r := range rrecords {
-		idRecord := recordToRecord(r, zone, environment, provider)
+		idRecord := recordToRecord(r, zone, pinto.environment, pinto.provider)
 		idRecord.id = computeRecordId(idRecord)
 		record := make(map[string]interface{})
 		record["name"] = r.Name
@@ -126,7 +119,7 @@ func dataSourceDnsRecordsRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	zoneId := strings.TrimSuffix(zone, ".") + "."
-	d.SetId(zoneId + environment + "." + provider + ".")
+	d.SetId(zoneId + pinto.environment + "." + pinto.provider + ".")
 	e := d.Set("records", records)
 	if e != nil {
 		return diag.FromErr(err)

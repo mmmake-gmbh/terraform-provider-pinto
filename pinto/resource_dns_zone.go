@@ -21,14 +21,6 @@ func resourceDnsZone() *schema.Resource {
 			StateContext: resourceDnsZoneImport,
 		},
 		Schema: map[string]*schema.Schema{
-			schemaProvider: {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			schemaEnvironment: {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -45,13 +37,8 @@ type Zone struct {
 
 func createZoneFromData(p *PintoProvider, d *schema.ResourceData) (Zone, error) {
 	var zone Zone
-	environment := getEnvironment(p, d)
-	provider, err := getProvider(p, d)
-	if err != nil {
-		return zone, err
-	}
-	zone.provider = provider
-	zone.environment = environment
+	zone.provider = p.provider
+	zone.environment = p.environment
 
 	zone.name = d.Get("name").(string)
 
@@ -116,12 +103,7 @@ func resourceDnsZoneRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 
 	zone := d.Get("name").(string)
-	environment := getEnvironment(pinto, d)
-	provider, err := getProvider(pinto, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, provider, environment)
+	log.Printf("[INFO] Pinto: Read Zone %s of environment %s for provider %s \n", zone, pinto.provider, pinto.environment)
 
 	request := pinto.client.ZonesApi.
 		DnsApiZonesZoneGet(pctx, zone).
@@ -228,14 +210,6 @@ func resourceDnsZoneImport(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	log.Printf("[DEBUG] Pinto: ZoneName = %s", zoneName)
 	err := d.Set("name", zoneName)
-	if err != nil {
-		return nil, err
-	}
-	err = d.Set(schemaProvider, provider)
-	if err != nil {
-		return nil, err
-	}
-	err = d.Set(schemaEnvironment, environment)
 	if err != nil {
 		return nil, err
 	}

@@ -1,12 +1,9 @@
 package pinto
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const (
@@ -27,32 +24,6 @@ func handleClientError(op string, errorString string, httpResponse *http.Respons
 		log.Printf("[ERROR] Unable to perform operation %s. \n Reason: %s", op, errorString)
 		return errorString
 	}
-}
-
-func getProvider(p *PintoProvider, d *schema.ResourceData) (string, error) {
-	res := ""
-	spec, ok := d.GetOk(schemaProvider)
-	if ok {
-		res = spec.(string)
-	} else {
-		if p.provider != "" {
-			res = p.provider
-		} else {
-			return "", fmt.Errorf("invalid configuration. %s has to be set on provider or resource-level", schemaProvider)
-		}
-	}
-	return res, nil
-}
-
-func getEnvironment(p *PintoProvider, d *schema.ResourceData) string {
-	res := ""
-	spec, ok := d.GetOk(schemaEnvironment)
-	if ok {
-		res = spec.(string)
-	} else {
-		res = p.environment
-	}
-	return res
 }
 
 // TODO: Clarify missing struct in client

@@ -23,14 +23,6 @@ func resourceDnsRecord() *schema.Resource {
 			StateContext: resourceDnsRecordImport,
 		},
 		Schema: map[string]*schema.Schema{
-			schemaProvider: {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			schemaEnvironment: {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"zone": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -83,13 +75,8 @@ func computeRecordId(record Record) string {
 
 func dataToRecord(d *schema.ResourceData, provider *PintoProvider) (Record, error) {
 	var record Record
-	s, err := getProvider(provider, d)
-	if err != nil {
-		return record, err
-	} else {
-		record.provider = s
-	}
-	record.environment = getEnvironment(provider, d)
+	record.provider = provider.provider
+	record.environment = provider.environment
 	record.zone = d.Get("zone").(string)
 	record.Name = d.Get("name").(string)
 	record.Type = gopinto.RecordType(d.Get("type").(string))
@@ -374,15 +361,7 @@ func resourceDnsRecordImport(ctx context.Context, d *schema.ResourceData, m inte
 
 	// add gathered info to ResourceData
 	d.SetId(record.id)
-	err := d.Set(schemaProvider, record.provider)
-	if err != nil {
-		return nil, err
-	}
-	err = d.Set(schemaEnvironment, record.environment)
-	if err != nil {
-		return nil, err
-	}
-	err = d.Set("name", record.Name)
+	err := d.Set("name", record.Name)
 	if err != nil {
 		return nil, err
 	}
